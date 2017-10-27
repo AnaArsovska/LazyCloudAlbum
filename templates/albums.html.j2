@@ -1,0 +1,24 @@
+{% extends 'base.html.j2' %}
+{% import 'createButton.html.j2' as button %}
+
+{% block content %}
+   <h2 id = "sec1">Your Albums </h2>
+   <ul>
+      <li class = "next_album">
+         <a href="/create">
+            <div class = "square"><div class = "content"> + </div> <div class = "content" id="up"> + </div></div>
+         </a>
+      </li>
+      {% for album in albums%}
+         <li>
+            <a href= "/view/{{album.key.urlsafe()}}">
+               <div class = "thumbnail"> </div>
+               <div class = "album_info">
+                  <div class = "album_title">{{album.title}}</div>
+                  <div class="date fancy">{{album.creation_date.day}}-{{album.creation_date.month}}-{{album.creation_date.year}}</div>
+               </div>
+            </a>
+         </li>
+      {% endfor %}
+   </ul>
+{% endblock %}

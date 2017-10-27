@@ -1,0 +1,12 @@
+{% extends 'base.html.j2' %}
+
+{% block content %}
+
+<form action="/build" method="post">
+   <input name="title" id="title" type="text" class="edit"
+   placeholder="Untitled Album" /> 
+
+   <input type="submit" value="Build" />
+</form>
+
+{% endblock %}

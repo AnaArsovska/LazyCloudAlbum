@@ -1,0 +1,282 @@
+@import url('https://fonts.googleapis.com/css?family=Satisfy');
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
+
+$cursive: Satisfy;
+$normal: 'Open Sans';
+
+$light: #FBF9F9;
+$accent-light: #EF9C7D;
+$main: #513a4d;
+$accent-dark: #DA5D34;
+$dark: #272228;
+
+$shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+$shadow-up: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+
+header, footer, li, button {
+   box-shadow: $shadow;
+}
+
+body {
+   background-color: darken($light, 4%);
+   //background-color: lighten($accent-light, 25%);
+   margin: 0;
+   display: flex;
+   flex-direction: column;
+   min-height: 100vh;
+   font-family: $normal, sans-serif;
+   color: $dark;
+
+   &::after {
+      flex:1;
+      height: 100%;
+      content: " ";
+      order:3;
+   }
+}
+
+a{
+   text-decoration: none;
+   color: $dark;
+   transition: .2s;
+   border-bottom: dashed 2px;
+   border-color: rgba(0,0,0,0);
+   font-weight: 700;
+}
+
+header {
+   order:1;
+   background-color: $main;
+   display: flex;
+   align-items: flex-end;
+   justify-content: space-between;
+   padding: 1em;
+   text-align: right;
+   color: darken($light, 40%);
+
+   a {
+      color: $accent-light;
+   }
+   a:hover, a:active{
+      border-color: $accent-dark;
+   }
+
+   h1 {
+      margin: 0 12.5vw;
+      letter-spacing: 3px;
+   }
+}
+
+footer{
+   order:4;
+   background-color: $dark;
+   color: $main;
+   display: flex;
+   justify-content: flex-start;
+
+   a{
+      display: block;
+      margin: 24px;
+      color: $accent-light;
+   }
+
+   a:hover, a:active {
+      border-color: $accent-dark;
+   }
+}
+
+#content {
+   order:2;
+   display: grid;
+   grid-template-columns: repeat(12, 1fr ) ;
+   grid-column-gap: 24px;
+   grid-row-gap: 24px;
+   margin: 24px;
+}
+
+ul {
+   grid-area: 3/2/4/12;
+   display: grid;
+   grid-template-columns: repeat(8, 1fr ) ;
+   grid-column-gap: 24px;
+   grid-row-gap: 24px;
+   list-style-type: none;
+   padding: 0;
+   margin: 0;
+}
+
+li {
+   grid-column-start: span 2;
+   background-color: white;
+   transition: .5s ease;
+}
+
+li:hover, li:active {
+   box-shadow: $shadow-up;
+}
+
+.album_info{
+   margin: 5%;
+}
+.thumbnail {
+    height: 0;
+    padding-bottom: 90%;
+    width: 90%;
+    background-color: $dark;
+    margin: 5% auto 0 auto;
+}
+
+li.next_album {
+   border: dashed 12px;
+   border-color: $light;
+   background-color: transparent;
+   box-shadow: none;
+   text-align: center;
+   display: flex;
+   align-items: stretch;
+   transition: .5 ease;
+   a {
+      flex: 1;
+      color: $accent-dark;
+   }
+
+   &:hover, &:active {
+      border-color: white;
+
+      .content{
+         background-color: $accent-dark;
+      }
+
+
+   }
+}
+
+.square {
+   margin: 30% auto;
+   position: relative;
+   width: 40%;
+   transition: .5s ease;
+   color: rgba(0,0,0,0)
+}
+
+.square::after {
+   content: "";
+   display: block;
+   padding-bottom: 100%;
+}
+
+.content {
+   position: absolute;
+   width: 80%;
+   height: 20%;
+   top: 40%;
+   left: 10%;
+   background-color: lighten($accent-dark, 15%);
+   border-radius: 6px;
+   transition: .5s ease;
+}
+#up{
+   height: 80%;
+   width: 20%;
+   top: 10%;
+   left: 40%;
+}
+
+#intro{
+   grid-area: 1/3/2/10;
+
+   h2 {
+      font-size: 24pt;
+   }
+}
+
+#sec1{
+   grid-area: 1/3/2/10;
+}
+
+#sec2{
+   grid-area: 2/4/3/9;
+}
+
+.date {
+   opacity: .7;
+}
+
+.fancy{
+   font-family:  $cursive, cursive;
+}
+
+.album_title{
+   text-transform: uppercase;
+}
+
+#title{
+   border: none;
+   background: none;
+   font-size: 24pt;
+   font-family: $cursive, cursive;
+   text-align: center;
+   width: 100%;
+   color: $dark;
+   &.edit{
+      border-bottom: dashed medium $accent-dark;
+   }
+   &:focus {
+      outline: none;
+   }
+}
+
+form {
+   padding: 0;
+   margin: 0;
+   grid-area: 1/5/1/9;
+}
+
+::placeholder {
+   color: $dark;
+   opacity: .5;
+}
+
+button {
+   background-color: $accent-dark;
+   border-radius: 8px;
+   border: none;
+   font-size: 24pt;
+   color: $light;
+   text-align: center;
+   width: 100%;
+   padding: .5em 0;
+
+   &:active {
+      background-color: darken($accent-dark, 10%);
+      box-shadow: 0 0 0 0;
+   }
+   &:focus {
+      outline:0;
+   }
+
+   span{
+      position: relative;
+      transition: .5s ease;
+      right: 0;
+
+      &::after {
+         content: "\2702";
+         opacity: 0;
+         transition: 0.5s ease;
+         position: absolute;
+         top: 5px;
+         left: 60px;
+      }
+   }
+
+   &:hover span{
+      position: relative;
+      right: 15px;
+
+      &::after{
+         opacity: 1;
+         left: 80px;
+      }
+   }
+}

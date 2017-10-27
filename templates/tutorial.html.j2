@@ -1,0 +1,9 @@
+{% extends 'base.html.j2' %}
+{% import 'createButton.html.j2' as button %}
+
+{% block content %}
+   This is a tutorial for users without albums.
+
+   {{ button.create() }}
+
+{% endblock %}
