@@ -5,10 +5,10 @@
    <h2> {{album.title}}</h2>
 
    <p> This is your album </p>
-   <a href={{delete}}> delete </a>
-   {{ button.button("&#10515;", "download", "PDF") }}
 
-   {{ button.button("&#xf014;", "delete", "Delete") }}
+   <form method="post" action="/edit/delete/{{album.key.urlsafe()}}">
+      <button type="submit" > Delete </button>
+   </form>
 
    {{ button.button("&#9881;", "save", "Save") }}
 
