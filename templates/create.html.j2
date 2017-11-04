@@ -2,10 +2,12 @@
 
 {% block content %}
 
-<form action="/build" method="post">
+<form action="/build" method="post" enctype="multipart/form-data"  >
    <input name="title" id="title" type="text" class="edit"
    placeholder="Untitled Album" /> 
 
+   <input type="file" name="file" accept="image/*" />
+   <br />
    <input type="submit" value="Build" />
 </form>
 

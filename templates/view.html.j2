@@ -12,4 +12,12 @@
 
    {{ button.button("&#9881;", "save", "Save") }}
 
+  
+   	{% if album.html %}
+      <img src={{album.html}}/>
+
+   	{% else %}
+   		<p> No image uploaded </p>
+	{% endif %}
+
 {% endblock %}
