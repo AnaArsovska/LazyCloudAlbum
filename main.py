@@ -1,7 +1,7 @@
 import jinja2
 import os
 import webapp2
-import models
+import utils
 
 from google.appengine.api import users
 
@@ -12,11 +12,11 @@ template_env = jinja2.Environment(
 
 class MainPage(webapp2.RequestHandler):
     def get(self):
-        context = getContext(self)
+        context = utils.getContext(self)
         if not context['user']:
             template = template_env.get_template('welcome.html.j2')
         else:
-            context['albums'] = models.get_albums( context['user'].user_id() )
+            context['albums'] = utils.get_albums( context['user'].user_id() )
             if not context['albums'] :
                 template = template_env.get_template('tutorial.html.j2')
             else:
@@ -26,51 +26,36 @@ class MainPage(webapp2.RequestHandler):
 
 class AboutPage(webapp2.RequestHandler):
     def get(self):
-        context = getContext(self)
+        context = utils.getContext(self)
         template = template_env.get_template('about.html.j2')
         self.response.out.write(template.render(context))
 
 class HowToPage(webapp2.RequestHandler):
     def get(self):
-        context = getContext(self)
+        context = utils.getContext(self)
         template = template_env.get_template('how_to.html.j2')
         self.response.out.write(template.render(context))
 
 class CreatePage(webapp2.RequestHandler):
     def get(self):
-        context = getContext(self)
+        context = utils.getContext(self)
         template = template_env.get_template('create.html.j2')
         self.response.out.write(template.render(context))
 
 class ViewPage(webapp2.RequestHandler):
     def get(self, album_key):
-        context = getContext(self)
-        album = models.get_album_by_key(album_key)
+        context = utils.getContext(self)
+        album = utils.get_album_by_key(album_key)
         if album:
-            if album.public:
+            if album.public or album.key.parent().get().user_id == context['user'].user_id() :
                 context['album'] = album
+                context["delete"] = "/edit/delete/" + album_key
                 template = template_env.get_template('view.html.j2')
             else:
                 template = template_env.get_template('private.html.j2')
         else:
             template = template_env.get_template('nothing_here.html.j2')
         self.response.out.write(template.render(context))
-
-def getContext(page):
-    user = users.get_current_user()
-    login_url = users.create_login_url(page.request.path)
-    logout_url = users.create_logout_url(page.request.path)
-    if user:
-        account = models.get_account( user.user_id() )
-    else:
-        account = None
-    context = {
-        'login_url': login_url,
-        'user': user,
-        'logout_url': logout_url,
-        'account': account
-    }
-    return context
 
 application = webapp2.WSGIApplication([
     (r'/about', AboutPage),
