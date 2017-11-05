@@ -2,8 +2,11 @@ import jinja2
 import os
 import webapp2
 import utils
+import logging
 
 from google.appengine.api import users
+
+from google.appengine.ext import blobstore
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 
@@ -40,7 +43,9 @@ class CreatePage(webapp2.RequestHandler):
     def get(self):
         context = utils.getContext(self)
         template = template_env.get_template('create.html.j2')
-        self.response.out.write(template.render(context))
+        upload_url = blobstore.create_upload_url('/edit/build')
+        logging.info("upload url: %s", upload_url)
+        self.response.out.write(template.render(context, upload_url=upload_url))
 
 class ViewPage(webapp2.RequestHandler):
     def get(self, album_key):

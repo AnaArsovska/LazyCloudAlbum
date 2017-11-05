@@ -12,7 +12,11 @@
       {% for album in albums%}
          <li>
             <a href= "/view/{{album.key.urlsafe()}}">
-               
+               <div class = "thumbnail">
+               {% if album.thumbnail_url %}
+                  <img src="{{album.thumbnail_url}}" height="262" width="100%"/>
+               {% endif %}
+               </div>
                <div class = "album_info">
                   <div class = "album_title">{{album.title}}</div>
                   <div class="date fancy">{{album.creation_date.day}}-{{album.creation_date.month}}-{{album.creation_date.year}}</div>
