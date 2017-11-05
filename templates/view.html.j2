@@ -2,14 +2,12 @@
 {% import 'createButton.html.j2' as button %}
 
 {% block content %}
-   <h2> {{album.title}}</h2>
+   <h2 id = "sec1"> {{album.title}}</h2>
 
-   <p> This is your album </p>
+   <p id = "sec2">(Album)</p>
 
-   <form method="post" action="/edit/delete/{{album.key.urlsafe()}}">
-      <button type="submit" > Delete </button>
-   </form>
-
-   {{ button.button("&#9881;", "save", "Save") }}
+   {{ button.button("delete", "fa-trash-o","Delete", "/edit/delete/"+album.key.urlsafe() ) }}
+   {{ button.button("pdf", "fa-floppy-o","PDF", "") }}
+   {{ button.button("save", "fa-cogs","Save","/edit/{{album.key.urlsafe()}}") }}
 
 {% endblock %}

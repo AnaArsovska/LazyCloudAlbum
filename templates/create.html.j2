@@ -2,11 +2,10 @@
 
 {% block content %}
 
-<form action="/edit/build" method="post">
+<form class = "build" action="/edit/build" method="post" id="build_f">
    <input name="title" id="title" type="text" class="edit"
    placeholder="Untitled Album" />
-
-   <input type="submit" value="Build" />
 </form>
+<button id ="build" form="build_f"> <span> Build <i class="fa fa-scissors" aria-hidden="true"></i> </span></button>
 
 {% endblock %}
