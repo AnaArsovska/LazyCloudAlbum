@@ -12,10 +12,10 @@
       {% for album in albums%}
          <li>
             <a href= "/view/{{album.key.urlsafe()}}">
-               <div class = "thumbnail">
-               {% if album.thumbnail_url %}
-                  <img src="{{album.thumbnail_url}}" height="262" width="100%"/>
-               {% endif %}
+               <div class = "thumbnail" {% if album.thumbnail_url %}
+                  style="background-image:url({{album.thumbnail_url}}); background-size: cover;"
+               {% endif %}>
+
                </div>
                <div class = "album_info">
                   <div class = "album_title">{{album.title}}</div>
