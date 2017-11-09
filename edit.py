@@ -15,12 +15,6 @@ from google.appengine.ext.webapp import blobstore_handlers
 class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
     @ndb.transactional
     def post(self):
-        if self.get_uploads():
-            upload = self.get_uploads()[0]
-            blob_key=upload.key()       
-        else:
-            blob_key = None
-
         bucket_name = os.environ.get('BUCKET_NAME', app_identity.get_default_gcs_bucket_name())
 
         title = str(self.request.get('title')).strip()
@@ -29,8 +23,16 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
         if title :
             album.title = title
 
-        if blob_key:
-            album.thumbnail_url = images.get_serving_url(blob_key, size=100, crop=True)
+        if self.get_uploads():
+            upload = self.get_uploads()[0]
+            thumbnail_blob_key = upload.key() 
+            for upload in self.get_uploads():
+                album.images.append(str(upload.key()))
+        else:
+            thumbnail_blob_key = None
+
+        if thumbnail_blob_key:
+            album.thumbnail_url = images.get_serving_url(thumbnail_blob_key, size=200, crop=True)
         else:
             album.thumbnail_url = ""
 

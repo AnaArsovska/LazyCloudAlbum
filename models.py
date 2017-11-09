@@ -9,4 +9,5 @@ class Album(ndb.Model):
     creation_date = ndb.DateTimeProperty(auto_now_add=True)
     html = ndb.StringProperty(default = "Cats")
     thumbnail_url = ndb.StringProperty(default="")
+    images = ndb.StringProperty(repeated=True)
     public = ndb.BooleanProperty(default = True)
