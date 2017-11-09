@@ -6,10 +6,13 @@
 
    <p> This is your album </p>
 
-   {% if album.thumbnail_url %}
-   <img src="{{album.thumbnail_url}}" width="100%"/>
+   {% if images %}
+         {% for image in images%}
+               <img src="{{image}}" />
+         {% endfor %}
+
    {% else %}
-   <p> No image uploaded.</p>
+         <p> No image uploaded </p>
    {% endif %}
 
    <form method="post" action="/edit/delete/{{album.key.urlsafe()}}">
@@ -18,11 +21,6 @@
    {{ button.button("&#9881;", "save", "Save") }}
 
   
-   	{% if album.html %}
-      <img src={{album.html}}/>
-
-   	{% else %}
-   		<p> No image uploaded </p>
-	{% endif %}
+   	
 
 {% endblock %}

@@ -5,8 +5,9 @@ import utils
 import logging
 
 from google.appengine.api import users
-
+from google.appengine.api import images
 from google.appengine.ext import blobstore
+from google.appengine.ext.blobstore import BlobKey
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 
@@ -19,7 +20,7 @@ class MainPage(webapp2.RequestHandler):
         if not context['user']:
             template = template_env.get_template('welcome.html.j2')
         else:
-            context['albums'] = utils.get_albums( context['user'].user_id() )
+            context['albums'] = utils.get_albums( context['user'].user_id())
             if not context['albums'] :
                 template = template_env.get_template('tutorial.html.j2')
             else:
@@ -55,6 +56,11 @@ class ViewPage(webapp2.RequestHandler):
             if album.public or album.key.parent().get().user_id == context['user'].user_id() :
                 context['album'] = album
                 context["delete"] = "/edit/delete/" + album_key
+                image_urls = []
+                if album.images:
+                    for image_key in album.images:
+                        image_urls.append(images.get_serving_url(BlobKey(image_key), size=300))
+                context['images'] = image_urls
                 template = template_env.get_template('view.html.j2')
             else:
                 template = template_env.get_template('private.html.j2')
