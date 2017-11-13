@@ -2,12 +2,26 @@
 {% import 'createButton.html.j2' as button %}
 
 {% block content %}
-   <h2 id = "sec1"> {{album.title}}</h2>
+   {% if album.key.parent().get().user_id == user.user_id() %}
+      <form class = "edit" action="/edit/{{album.key.urlsafe()}}" method="post">
+         <input name="title" id="title" type="text" class="edit"
+         value={{album.title}}/>
+         <input type="checkbox" id="public" {%if album.public%} checked {%endif%}>
+         <label for="public">Public</label>
+         <button type="submit"> Save </button>
+      </form>
+
+      {{ button.button("delete", "fa-trash-o","Delete", "/edit/delete/"+album.key.urlsafe() ) }}
+
+   {% else %}
+      <h2 id = "sec1"> {{album.title}}</h2>
+   {% endif %}
+
+   {{ button.button("pdf", "fa-floppy-o","PDF", "") }}
 
    <p id = "sec2">(Album)</p>
 
-   {{ button.button("delete", "fa-trash-o","Delete", "/edit/delete/"+album.key.urlsafe() ) }}
-   {{ button.button("pdf", "fa-floppy-o","PDF", "") }}
-   {{ button.button("save", "fa-cogs","Save","/edit/{{album.key.urlsafe()}}") }}
+
+
 
 {% endblock %}
