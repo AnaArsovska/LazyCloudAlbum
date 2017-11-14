@@ -1,6 +1,9 @@
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from models import *
+from json import dumps, loads
+from google.appengine.api.urlfetch import fetch, POST
+import yaml
 
 def getContext(page):
     user = users.get_current_user()
@@ -50,3 +53,48 @@ def get_album_by_key(urlsafe_key):
         return key.get()
     except Exception:
         return None
+
+
+def vision_api_web_detection(uri):
+    """This is the minimal code to accomplish a web detect request to the google vision api
+    You don't need 56 MiB of python client code installing 'google-cloud-vision' to accomplish
+    that task on google app engine, which does not even work.
+    .. TODO:: you should have secured your api key before you deploy this code snippet.
+    Please take a look at https://support.google.com/cloud/answer/6310037?hl=en
+    :param uri: the complete uri to compare against the web
+    :type uri: str
+    :return: the result dictionary
+    :rtype: dict
+    """
+
+    with open("config.yaml", 'r') as stream:
+        try:
+            config = yaml.load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    payload = {
+        "requests": [
+            {
+                "image": {
+                    "source": {
+                        "imageUri": uri
+                    }
+                },
+                "features": [
+                    {
+                        "type": "IMAGE_PROPERTIES"
+                    }
+                ]
+            }
+        ]
+    }
+
+    response = fetch(
+        "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
+        method=POST,
+        payload=dumps(payload),
+        headers={"Content-Type": "application/json"}
+    )
+    result = loads(response.content)
+    return str(result)[0:1000]

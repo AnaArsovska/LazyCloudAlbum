@@ -2,25 +2,33 @@
 {% import 'createButton.html.j2' as button %}
 
 {% block content %}
-   <h2> {{album.title}}</h2>
+   {% if album.key.parent().get().user_id == user.user_id() %}
+      <form class = "edit" action="/edit/{{album.key.urlsafe()}}" method="post">
+         <input name="title" id="title" type="text" class="edit"
+         value={{album.title}}>
+         <input type="checkbox" id="public" {%if album.public%} checked {%endif%}>
+         <label for="public">Public</label>
+         <button type="submit"> Save </button>
+      </form>
 
-   <p> This is your album </p>
-
-   {% if images %}
-         {% for image in images%}
-               <img src="{{image}}" />
-         {% endfor %}
+      {{ button.button("delete", "fa-trash-o","Delete", "/edit/delete/"+album.key.urlsafe() ) }}
 
    {% else %}
-         <p> No image uploaded </p>
+      <h2 id = "sec1"> {{album.title}}</h2>
    {% endif %}
 
-   <form method="post" action="/edit/delete/{{album.key.urlsafe()}}">
-      <button type="submit" > Delete </button>
-   </form>
-   {{ button.button("&#9881;", "save", "Save") }}
+   {{ button.button("pdf", "fa-floppy-o","PDF", "") }}
 
-  
-   	
+   <div id = "album">
+      {% if images %}
+            {% for image in images%}
+                  <img src="{{image}}" />
+            {% endfor %}
+
+      {% else %}
+            <p> No image uploaded </p>
+      {% endif %}
+   </div>
+   <p> This is your album {{album.html}} </p>
 
 {% endblock %}
