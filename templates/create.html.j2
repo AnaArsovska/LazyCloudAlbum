@@ -50,7 +50,7 @@ function show_image_preview(file_selector) {
 	if (number_of_images > 1) {
 		for (var i =1; i<number_of_images; i++) {
 			/**
-			 *Generate class name of the respective image container appending index of selected images, 
+			 *Generate class name of the respective image container appending index of selected images,
 			 *sothat we can match images selected and the one which is previewed
 			 */
 			var newImagePreviewRow = $(imagePreviewRow).clone().removeClass('imagePreviewRow_0').addClass('imagePreviewRow_'+i);
@@ -67,12 +67,12 @@ function show_image_preview(file_selector) {
 		if (!file.type.match(imageType)) {
 		  continue;
 		}
-		
+
 		/**
 		 * Create an image dom object dynamically
 		 */
 		var img = document.createElement("img");
-		
+
 		/**
 		 * Get preview area of the image
 		 */
@@ -80,13 +80,13 @@ function show_image_preview(file_selector) {
 		/**
 		 * Append preview of selected image to the corresponding container
 		 */
-		preview.append(img); 
-		
+		preview.append(img);
+
 		/**
 		 * Set style of appended preview(Can be done via css also)
 		 */
 		preview.find('img').addClass('previewImage').css({'max-width': '500px', 'max-height': '500px'});
-		
+
 		/**
 		 * Initialize file reader
 		 */
@@ -123,11 +123,11 @@ function upload_images_selected(event, formObj)
 	//Url where the image is to be uploaded
 	var url= "/admin/content/upload";
 	//Get number of inputs
-	var number_of_inputs = $(fileInputs).length; 
+	var number_of_inputs = $(fileInputs).length;
 	var inputCount = 0;
 	//Iterate through each file selector input
 	$(fileInputs).each(function(index, input){
-		
+
 		fileList = input.files;
 		// Create a new FormData object.
 		var formData = new FormData();
@@ -160,7 +160,7 @@ function upload_images_selected(event, formObj)
 						var saved_file_name = this.target;
 						var file_name_input = '<input type="hidden" class="image_name" name="image_names[]" value="' +saved_file_name+ '" />';
 						file_info_container.append(file_name_input);
-						
+
 						imageCount--;
 					})
 					//Decrement count of inputs to find all images selected by all multi select are uploaded
@@ -189,7 +189,7 @@ function upload_images_selected(event, formObj)
 		xhr.send(formData);
 		*/
 	})
-	
+
 	return false;
 }
 </script>

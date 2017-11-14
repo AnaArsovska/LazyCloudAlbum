@@ -15,8 +15,6 @@ from google.appengine.ext.webapp import blobstore_handlers
 class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
     @ndb.transactional
     def post(self):
-        bucket_name = os.environ.get('BUCKET_NAME', app_identity.get_default_gcs_bucket_name())
-
         title = str(self.request.get('title')).strip()
         account = utils.get_account()
         album = models.Album( parent = account.key )
@@ -25,14 +23,16 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
 
         if self.get_uploads():
             upload = self.get_uploads()[0]
-            thumbnail_blob_key = upload.key() 
+            thumbnail_blob_key = upload.key()
             for upload in self.get_uploads():
                 album.images.append(str(upload.key()))
         else:
             thumbnail_blob_key = None
 
         if thumbnail_blob_key:
-            album.thumbnail_url = images.get_serving_url(thumbnail_blob_key, size=200, crop=True)
+            thumbnail_url = images.get_serving_url(thumbnail_blob_key, size=200, crop=True)
+            album.thumbnail_url = thumbnail_url
+            album.html = utils.vision_api_web_detection(thumbnail_url)
         else:
             album.thumbnail_url = ""
 
@@ -48,7 +48,19 @@ class DeleteHandler(webapp2.RequestHandler):
             album.key.delete()
         self.redirect('/')
 
+class EditHandler(webapp2.RequestHandler):
+    @ndb.transactional
+    def post(self, album_key):
+        album = utils.get_album_by_key(album_key)
+        title = str(self.request.get('title')).strip()
+        if title :
+            album.title = title
+        album.public = bool(self.request.get("public"))
+        album.put()
+        self.redirect('/')
+
 application = webapp2.WSGIApplication([
     (r'/edit/build', BuildHandler),
-    (r'/edit/delete/(.*)', DeleteHandler)
+    (r'/edit/delete/(.*)', DeleteHandler),
+    (r'/edit/(.*)', EditHandler)
     ], debug=True)

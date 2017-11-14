@@ -1,9 +1,5 @@
-{% macro create() %}
-   <form action="/create" method="get">
-     <button > <span class="fancy"> Create </span> </button>
-   </form>
-{% endmacro %}
-
-{% macro button(symbol, class, text) %}
-     <button class = {{class}} > <span class="button" + {{class}}> {{text}} </span> <span class="symbol">{{symbol}}</span></button>
+{% macro button(id, symbol, text, action, method = "post", form = "") %}
+   <form class = "button" method={{method}} action={{action}}>
+     <button id = {{id}} > <span> {{text}} <i class="fa {{symbol}}" aria-hidden="true"></i> </span></button>
+  </form>
 {% endmacro %}
