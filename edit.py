@@ -32,7 +32,7 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
         if thumbnail_blob_key:
             thumbnail_url = images.get_serving_url(thumbnail_blob_key, size=200, crop=True)
             album.thumbnail_url = thumbnail_url
-            album.html = utils.vision_api_web_detection(thumbnail_url)
+            album.html = utils.vision_api_web_detection(self.get_uploads()[0])
         else:
             album.thumbnail_url = ""
 

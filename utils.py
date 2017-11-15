@@ -4,6 +4,8 @@ from models import *
 from json import dumps, loads
 from google.appengine.api.urlfetch import fetch, POST
 import yaml
+from google.appengine.ext import blobstore
+import base64
 
 def getContext(page):
     user = users.get_current_user()
@@ -55,7 +57,7 @@ def get_album_by_key(urlsafe_key):
         return None
 
 
-def vision_api_web_detection(uri):
+def vision_api_web_detection(info):
     """This is the minimal code to accomplish a web detect request to the google vision api
     You don't need 56 MiB of python client code installing 'google-cloud-vision' to accomplish
     that task on google app engine, which does not even work.
@@ -67,6 +69,9 @@ def vision_api_web_detection(uri):
     :rtype: dict
     """
 
+    data = blobstore.BlobReader(info.key()).read()
+    str = base64.b64encode(data)
+
     with open("config.yaml", 'r') as stream:
         try:
             config = yaml.load(stream)
@@ -77,13 +82,11 @@ def vision_api_web_detection(uri):
         "requests": [
             {
                 "image": {
-                    "source": {
-                        "imageUri": uri
-                    }
+                    "content": str
                 },
                 "features": [
                     {
-                        "type": "IMAGE_PROPERTIES"
+                        "type": "LABEL_DETECTION",
                     }
                 ]
             }
@@ -97,4 +100,6 @@ def vision_api_web_detection(uri):
         headers={"Content-Type": "application/json"}
     )
     result = loads(response.content)
-    return str(result)[0:1000]
+    #main_colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors'][0:3]
+
+    return result[u'responses'][0][u'labelAnnotations'][0][u'description']
