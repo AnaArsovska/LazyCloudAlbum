@@ -18,6 +18,24 @@
    {% endif %}
 
    {{ button.button("pdf", "fa-floppy-o","PDF", "") }}
+   
+   
+   <div id = "album">
+      {% if images %}
+            {% for image in images%}
+                  <img src="{{image}}" />
+            {% endfor %}
+
+      {% else %}
+            <p> No image uploaded </p>
+      {% endif %}
+   </div>
+
+    <a href="#" onclick="return xepOnline.Formatter.Format("",{render:'download'});">
+                   <img src="PrintIcon.jpg">
+    </a>
+
+   <p> {{album.html}} </p>
 
    <p id = "sec2">(Album)</p>
 
