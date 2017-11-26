@@ -13,8 +13,10 @@ from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 
 class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
+
     @ndb.transactional
     def post(self):
+        """ Build Handler constructs album based on uploaded pictures """
         title = str(self.request.get('title')).strip()
         account = utils.get_account()
         album = models.Album( parent = account.key )
@@ -43,6 +45,12 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
 class DeleteHandler(webapp2.RequestHandler):
     @ndb.transactional
     def post(self, album_key):
+        """ Deletes album specified by URL
+
+        Args:
+            album_key: URL safe version of the album key
+
+        """
         album = utils.get_album_by_key(album_key)
         if album and album.key.parent().get().user_id == users.get_current_user().user_id():
             album.key.delete()
@@ -51,6 +59,12 @@ class DeleteHandler(webapp2.RequestHandler):
 class EditHandler(webapp2.RequestHandler):
     @ndb.transactional
     def post(self, album_key):
+        """Edits properties of album specified by URL
+
+        Args:
+            album_key: URL safe version of the album key
+            
+        """
         album = utils.get_album_by_key(album_key)
         title = str(self.request.get('title')).strip()
         if title :
