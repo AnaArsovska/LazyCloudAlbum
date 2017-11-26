@@ -8,6 +8,12 @@ from google.appengine.ext import blobstore
 import base64
 
 def getContext(page):
+    """ Gathers necessary information to populate pages
+
+    Returns:
+        A dictionary with the info
+
+    """
     user = users.get_current_user()
     login_url = users.create_login_url(page.request.path)
     logout_url = users.create_logout_url(page.request.path)
@@ -25,14 +31,26 @@ def getContext(page):
 
 @ndb.transactional
 def get_account(user_id=None):
+    """ Returns the account object for the current user (also creates one if necessary).
+
+    Args:
+        user_id: Google user id
+    Returns:
+        none if no user logged in, account object otherwise
+
+    """
+    #Return none if no user is logged in
     if not user_id:
         user = users.get_current_user()
         if not user:
             return None
         user_id = user.user_id()
 
+    #Get account
     key = ndb.Key('Account', user_id)
     account = key.get()
+
+    #If no account for user exists, make one.
     if not account:
         account = Account(user_id = user_id)
         account.key = key
@@ -40,6 +58,14 @@ def get_account(user_id=None):
     return account
 
 def get_albums(user_id):
+    """ Gets all a user's albums
+
+    Args:
+        user_id: Google user id
+    Returns:
+        All the albums for that user
+
+    """
     if not user_id:
         user = users.get_current_user()
         if not user:
@@ -50,6 +76,14 @@ def get_albums(user_id):
     return a.fetch()
 
 def get_album_by_key(urlsafe_key):
+    """ Converts URL safe key to real key and retrieves associated album
+
+    Args:
+        urlsafe_key: URL safe version of an album key
+    Returns:
+        Album object
+
+    """
     try:
         key = ndb.Key(urlsafe = urlsafe_key)
         return key.get()
@@ -58,15 +92,13 @@ def get_album_by_key(urlsafe_key):
 
 
 def vision_api_web_detection(info):
-    """This is the minimal code to accomplish a web detect request to the google vision api
-    You don't need 56 MiB of python client code installing 'google-cloud-vision' to accomplish
-    that task on google app engine, which does not even work.
-    .. TODO:: you should have secured your api key before you deploy this code snippet.
-    Please take a look at https://support.google.com/cloud/answer/6310037?hl=en
-    :param uri: the complete uri to compare against the web
-    :type uri: str
-    :return: the result dictionary
-    :rtype: dict
+    """ Test for vision api
+
+    Args:
+        info: whatever the hell upload is
+    Returns:
+        First label
+        
     """
 
     data = blobstore.BlobReader(info.key()).read()
