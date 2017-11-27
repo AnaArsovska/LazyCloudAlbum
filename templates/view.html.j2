@@ -17,7 +17,27 @@
       <h2 id = "sec1"> {{album.title}}</h2>
    {% endif %}
 
-   {{ button.button("pdf", "fa-floppy-o","PDF", "") }}
+   <a href="#" onclick="return xepOnline.Formatter.Format('album',{render:'download', filename:'Your Lazy Album'});">
+      {{ button.button("pdf", "fa-floppy-o","PDF", "") }}
+   </a>
+
+   
+   <div id = "album">
+      {% if images %}
+            {% for image in images%}
+                  <img src="{{image}}" />
+            {% endfor %}
+
+      {% else %}
+            <p> No image uploaded </p>
+      {% endif %}
+   </div>
+
+    <a href="#" onclick="return xepOnline.Formatter.Format("",{render:'download'});">
+                   <img src="PrintIcon.jpg">
+    </a>
+
+   <p> {{album.html}} </p>
 
    <div id = "album">
       {% if images %}
