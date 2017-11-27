@@ -6,6 +6,14 @@ from google.appengine.api.urlfetch import fetch, POST
 import yaml
 from google.appengine.ext import blobstore
 import base64
+from PIL import Image
+from io import BytesIO
+import logging
+
+from google.appengine.ext import vendor
+vendor.add('lib')
+import cloudstorage
+
 
 def getContext(page):
     user = users.get_current_user()
@@ -56,6 +64,32 @@ def get_album_by_key(urlsafe_key):
     except Exception:
         return None
 
+def upload_file_to_cloud_storage(account, info):
+    data = blobstore.BlobReader(info.key()).read()
+    storage_api = cloudstorage.storage_api._get_storage_api(None)
+    
+    image_name = account.user_id + "/" + str(info.key())
+    headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
+    result = storage_api.do_request("https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name=" + image_name,
+        'POST', headers, data)
+    (status, headers, content) = result
+
+    logging.info(result)
+    logging.info(status)
+
+    logging.info("Okay, now trying to do it with a string...")
+    my_message = "Hello there world!"
+    headers =  {"Content-Type": "text/plain", "Content-Length": len(my_message)}
+    result = storage_api.do_request("https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name=myMessage",
+        'POST', headers, my_message)
+    
+    safe_filename = account.user_id + "%2f" + str(info.key())
+    result = storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + safe_filename + "?alt=media",
+        'GET')
+    logging.info("Result of gettin the object....")
+    logging.info(result)
+
+    logging.info(account.user_id)
 
 def vision_api_web_detection(info):
     """This is the minimal code to accomplish a web detect request to the google vision api
@@ -70,7 +104,9 @@ def vision_api_web_detection(info):
     """
 
     data = blobstore.BlobReader(info.key()).read()
-    str = base64.b64encode(data)
+    image_str = base64.b64encode(data)
+    # im = Image.open(BytesIO(data))
+    # quantize_js(im)
 
     with open("config.yaml", 'r') as stream:
         try:
@@ -82,7 +118,7 @@ def vision_api_web_detection(info):
         "requests": [
             {
                 "image": {
-                    "content": str
+                    "content": image_str
                 },
                 "features": [
                     {
@@ -102,4 +138,9 @@ def vision_api_web_detection(info):
     result = loads(response.content)
     #main_colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors'][0:3]
 
-    return result[u'responses'][0][u'labelAnnotations'][0][u'description']
+    # Returns (success, response). Response is empty if an error occurred
+    try:
+        label = result[u'responses'][0][u'labelAnnotations'][0][u'description']
+        return (True, label)
+    except KeyError:
+        return (False, "")
