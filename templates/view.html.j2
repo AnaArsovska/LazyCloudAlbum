@@ -31,14 +31,7 @@
    </div>
    <p> {{album.html}} </p>
 
-      {{ button.button("delete", "fa-trash-o","Delete", "/edit/delete/"+album.key.urlsafe() ) }}
-
-   {% else %}
-      <h2 id = "sec1"> {{album.title}}</h2>
-   {% endif %}
-
-   {{ button.button("pdf", "fa-floppy-o","PDF", "") }}
-
+   
    <p id = "sec2">(Album)</p>
 
 {% endblock %}
