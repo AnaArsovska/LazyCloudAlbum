@@ -17,8 +17,10 @@
       <h2 id = "sec1"> {{album.title}}</h2>
    {% endif %}
 
-   {{ button.button("pdf", "fa-floppy-o","PDF", "") }}
-   
+   <a href="#" onclick="return xepOnline.Formatter.Format('album',{render:'download', filename:'album'});">
+      {{ button.button("pdf", "fa-floppy-o","PDF", "") }}
+   </a>
+
    
    <div id = "album">
       {% if images %}
