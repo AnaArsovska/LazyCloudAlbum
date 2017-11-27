@@ -40,6 +40,18 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
 
         self.redirect('/')
 
+class EditHandler(webapp2.RequestHandler):
+    @ndb.transactional
+    def post(self, album_key):
+        album = utils.get_album_by_key(album_key)
+        title = str(self.request.get('title')).strip()
+        if title :
+            album.title = title
+        album.public = bool(self.request.get("public"))
+        album.put()
+
+        self.redirect('/')
+
 class DeleteHandler(webapp2.RequestHandler):
     @ndb.transactional
     def post(self, album_key):
