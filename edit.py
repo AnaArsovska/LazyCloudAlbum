@@ -2,6 +2,7 @@ import webapp2
 import models
 import utils
 import os
+import jinja2
 import logging
 
 from google.appengine.api import app_identity
@@ -11,6 +12,13 @@ from google.appengine.api import images
 
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
+
+from google.cloud import storage
+
+template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+
+template_env = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(template_dir))
 
 class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
     @ndb.transactional
@@ -32,13 +40,25 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
         if thumbnail_blob_key:
             thumbnail_url = images.get_serving_url(thumbnail_blob_key, size=200, crop=True)
             album.thumbnail_url = thumbnail_url
-            album.html = utils.vision_api_web_detection(self.get_uploads()[0])
+            utils.upload_file_to_cloud_storage(account, self.get_uploads()[0])
+            (success, html) = utils.vision_api_web_detection(self.get_uploads()[0])
+            if success:
+                album.html = html
+            else:
+                self.redirect('/edit/error')
+                return
         else:
             album.thumbnail_url = ""
 
         album.put()
 
         self.redirect('/')
+
+class ErrorPage(webapp2.RequestHandler):
+    def get(self):
+        context = utils.getContext(self)
+        template = template_env.get_template('album_create_error.html.j2')
+        self.response.out.write(template.render(context))
 
 class DeleteHandler(webapp2.RequestHandler):
     @ndb.transactional
@@ -61,6 +81,7 @@ class EditHandler(webapp2.RequestHandler):
 
 application = webapp2.WSGIApplication([
     (r'/edit/build', BuildHandler),
+    (r'/edit/error', ErrorPage),
     (r'/edit/delete/(.*)', DeleteHandler),
     (r'/edit/(.*)', EditHandler)
     ], debug=True)
