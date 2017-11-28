@@ -61,6 +61,9 @@ class ViewPage(webapp2.RequestHandler):
                     for image_key in album.images:
                         image_urls.append(images.get_serving_url(BlobKey(image_key), size=300))
                 context['images'] = image_urls
+                # get_html_from_cloud_storage returns the tuple (success, content). We ignore the first value and just take
+                # the content since it returns an error message for "content" if it did not succeed
+                (_, context['saved_html']) = utils.get_html_from_cloud_storage(album.key.parent().get(), album.key.urlsafe())
                 template = template_env.get_template('view.html.j2')
             else:
                 template = template_env.get_template('private.html.j2')

@@ -40,7 +40,6 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
         if thumbnail_blob_key:
             thumbnail_url = images.get_serving_url(thumbnail_blob_key, size=200, crop=True)
             album.thumbnail_url = thumbnail_url
-            utils.upload_file_to_cloud_storage(account, self.get_uploads()[0])
             (success, html) = utils.vision_api_web_detection(self.get_uploads()[0])
             if success:
                 album.html = html
@@ -51,6 +50,7 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
             album.thumbnail_url = ""
 
         album.put()
+        utils.upload_file_to_cloud_storage(account, self.get_uploads()[0], album.key.urlsafe())
 
         self.redirect('/')
 
@@ -65,6 +65,7 @@ class DeleteHandler(webapp2.RequestHandler):
     def post(self, album_key):
         album = utils.get_album_by_key(album_key)
         if album and album.key.parent().get().user_id == users.get_current_user().user_id():
+            utils.clear_album_data(album)
             album.key.delete()
         self.redirect('/')
 

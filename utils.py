@@ -64,32 +64,62 @@ def get_album_by_key(urlsafe_key):
     except Exception:
         return None
 
-def upload_file_to_cloud_storage(account, info):
+def get_html_filename(account, album_key):
+    return account.user_id + "/" + str(album_key) + "/html"
+
+def get_photo_filename(account, album_key, photo):
+    return get_photo_filename_by_key(account, album_key, photo.key())
+
+def get_photo_filename_by_key(account, album_key, photo_key):
+    return account.user_id + "/" + str(album_key) + "/photos/" + str(photo_key)
+
+def clear_album_data(album):
+    storage_api = cloudstorage.storage_api._get_storage_api(None)
+    for image_key in album.images:
+        blobstore.delete(image_key)
+        
+        cloudstorage_filename = get_photo_filename_by_key(album.key.parent().get(), album.key.urlsafe(), image_key)
+        cloudstorage_filename = cloudstorage_filename.replace("/","%2f")
+
+        storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + cloudstorage_filename,
+        'DELETE')
+
+    cloudstorage_filename = get_html_filename(album.key.parent().get(), album.key.urlsafe())
+    cloudstorage_filename = cloudstorage_filename.replace("/","%2f")
+    storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + cloudstorage_filename,
+        'DELETE')
+
+def get_html_from_cloud_storage(account, album_key):
+    storage_api = cloudstorage.storage_api._get_storage_api(None)
+    file_name = get_html_filename(account, album_key)
+
+    file_name = file_name.replace("/", "%2f")
+    (status, headers, content) = storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + file_name + "?alt=media",
+        'GET')
+
+    # Returns (success, response)
+    if status == 200:
+        return (True, content)
+    else:
+        return (False, "Error: No HTML found for the given user")
+
+def upload_file_to_cloud_storage(account, info, album_key):
     data = blobstore.BlobReader(info.key()).read()
     storage_api = cloudstorage.storage_api._get_storage_api(None)
     
-    image_name = account.user_id + "/" + str(info.key())
+    image_name = get_photo_filename(account, album_key, info)
     headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
-    result = storage_api.do_request("https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name=" + image_name,
+    storage_api.do_request("https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name=" + image_name,
         'POST', headers, data)
-    (status, headers, content) = result
 
-    logging.info(result)
-    logging.info(status)
-
-    logging.info("Okay, now trying to do it with a string...")
-    my_message = "Hello there world!"
-    headers =  {"Content-Type": "text/plain", "Content-Length": len(my_message)}
-    result = storage_api.do_request("https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name=myMessage",
+    my_message = "Hello there world! I am the saved HTML for user " + account.user_id + " for album " + str(album_key)
+    
+    headers =  {"Content-Type": "text/plain"}
+    html_content_name = get_html_filename(account, album_key)
+    logging.info("Saving html with filename:" + html_content_name)
+    storage_api.do_request("https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name=" + html_content_name,
         'POST', headers, my_message)
     
-    safe_filename = account.user_id + "%2f" + str(info.key())
-    result = storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + safe_filename + "?alt=media",
-        'GET')
-    logging.info("Result of gettin the object....")
-    logging.info(result)
-
-    logging.info(account.user_id)
 
 def vision_api_web_detection(info):
     """This is the minimal code to accomplish a web detect request to the google vision api
