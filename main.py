@@ -45,6 +45,12 @@ class HowToPage(webapp2.RequestHandler):
         template = template_env.get_template('how_to.html.j2')
         self.response.out.write(template.render(context))
 
+class ContactPage(webapp2.RequestHandler):
+    def get(self):
+        """ Loads contact page """
+        template = template_env.get_template('contact.html.j2')
+        self.response.out.write(template.render())
+
 class CreatePage(webapp2.RequestHandler):
     def get(self):
         """ Loads album creation page """
@@ -57,11 +63,11 @@ class CreatePage(webapp2.RequestHandler):
 class ViewPage(webapp2.RequestHandler):
     def get(self, album_key):
         """ Views album specified by URL
-
-        Args:
+            
+            Args:
             album_key: URL safe version of the album key
-
-        """
+            
+            """
         context = utils.getContext(self)
         album = utils.get_album_by_key(album_key)
         if album:
@@ -74,18 +80,22 @@ class ViewPage(webapp2.RequestHandler):
                     for image_key in album.images:
                         image_urls.append(images.get_serving_url(BlobKey(image_key), size=300))
                 context['images'] = image_urls
-                template = template_env.get_template('view.html.j2')
+                # get_html_from_cloud_storage returns the tuple (success, content). We ignore the first value and just take
+                # the content since it returns an error message for "content" if it did not succeed
+                (_, context['saved_html']) = utils.get_html_from_cloud_storage(album.key.parent().get(), album.key.urlsafe())
+            template = template_env.get_template('view.html.j2')
             else:
                 #Private album
                 template = template_env.get_template('private.html.j2')
-        else:
-            #Album with that key does not exist
-            template = template_env.get_template('nothing_here.html.j2')
+else:
+    #Album with that key does not exist
+    template = template_env.get_template('nothing_here.html.j2')
         self.response.out.write(template.render(context))
 
 application = webapp2.WSGIApplication([
-    (r'/about', AboutPage),
-    (r'/how_to', HowToPage),
-    (r'/create', CreatePage),
-    (r'/view/(.*)', ViewPage),
-    (r'/', MainPage)], debug=True)
+                                       (r'/about', AboutPage),
+                                       (r'/how_to', HowToPage),
+                                       (r'/create', CreatePage),
+                                       (r'/view/(.*)', ViewPage),
+                                       (r'/contact', ContactPage),
+                                       (r'/', MainPage)], debug=True)
