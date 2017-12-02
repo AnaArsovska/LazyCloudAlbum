@@ -6,6 +6,7 @@ from google.appengine.api.urlfetch import fetch, POST
 import yaml
 from google.appengine.ext import blobstore
 import base64
+import logging
 
 def getContext(page):
     """ Gathers necessary information to populate pages
@@ -98,27 +99,24 @@ def vision_api_web_detection(info):
         info: whatever the hell upload is
     Returns:
         First label
-        
+
     """
 
     data = blobstore.BlobReader(info.key()).read()
-    str = base64.b64encode(data)
+    string = base64.b64encode(data)
 
     with open("config.yaml", 'r') as stream:
-        try:
-            config = yaml.load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
+        config = yaml.load(stream)
 
     payload = {
         "requests": [
             {
                 "image": {
-                    "content": str
+                    "content": string
                 },
                 "features": [
                     {
-                        "type": "LABEL_DETECTION",
+                        "type": "IMAGE_PROPERTIES",
                     }
                 ]
             }
@@ -132,6 +130,20 @@ def vision_api_web_detection(info):
         headers={"Content-Type": "application/json"}
     )
     result = loads(response.content)
-    #main_colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors'][0:3]
+    colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
+    main_colors = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:5]
+    rgb_colors = []
+    for color in main_colors:
+        info = color[u'color']
+        rgb = [info[u'red'], info[u'green'], info[u'blue'],]
+        rgb_colors.append(rgb)
 
-    return result[u'responses'][0][u'labelAnnotations'][0][u'description']
+    palette_response = fetch(
+        'http://colormind.io/api/',
+        method=POST,
+        payload= '{"input": %s , "model":"default" }' % (str(rgb_colors)),
+        headers={"Content-Type": "application/json"}
+    )
+    palette = loads(palette_response.content)[u'result']
+
+    return str(palette) #result[u'responses'][0][u'imagePropertiesAnnotation'][0][u'description']

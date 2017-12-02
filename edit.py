@@ -13,13 +13,14 @@ from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 
 class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
-
     @ndb.transactional
     def post(self):
         """ Build Handler constructs album based on uploaded pictures """
+        logging.info(str(self.request.get('html')).strip())
         title = str(self.request.get('title')).strip()
         account = utils.get_account()
         album = models.Album( parent = account.key )
+        album.html = str(self.request.get('html')).strip()
         if title :
             album.title = title
 
@@ -34,13 +35,14 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
         if thumbnail_blob_key:
             thumbnail_url = images.get_serving_url(thumbnail_blob_key, size=200, crop=True)
             album.thumbnail_url = thumbnail_url
-            album.html = utils.vision_api_web_detection(self.get_uploads()[0])
+            #palette = utils.vision_api_web_detection(self.get_uploads()[0])
+            #album.html = palette #"<div style = 'background-color: rgb(%s)'> <img src = %s style ='padding:10px; margin: 10px; border: 3px solid rgb(%s); width: 200px; background-color: rgb(%s)'> </div>" % (",".join(map(str,palette[0])), album.thumbnail_url, ",".join(map(str,palette[2])), ",".join(map(str,palette[4])))
         else:
             album.thumbnail_url = ""
 
         album.put()
-
-        self.redirect('/')
+        logging.info("I should redirect")
+        #redirect moved to javascript, browser doesn't honor ajax redirects
 
 class DeleteHandler(webapp2.RequestHandler):
     @ndb.transactional
@@ -63,7 +65,7 @@ class EditHandler(webapp2.RequestHandler):
 
         Args:
             album_key: URL safe version of the album key
-            
+
         """
         album = utils.get_album_by_key(album_key)
         title = str(self.request.get('title')).strip()

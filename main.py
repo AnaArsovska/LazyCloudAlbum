@@ -45,6 +45,12 @@ class HowToPage(webapp2.RequestHandler):
         template = template_env.get_template('how_to.html.j2')
         self.response.out.write(template.render(context))
 
+class ContactPage(webapp2.RequestHandler):
+    def get(self):
+        """ Loads contact page """
+        template = template_env.get_template('contact.html.j2')
+        self.response.out.write(template.render())
+
 class CreatePage(webapp2.RequestHandler):
     def get(self):
         """ Loads album creation page """
@@ -88,4 +94,5 @@ application = webapp2.WSGIApplication([
     (r'/how_to', HowToPage),
     (r'/create', CreatePage),
     (r'/view/(.*)', ViewPage),
+    (r'/contact', ContactPage),
     (r'/', MainPage)], debug=True)
