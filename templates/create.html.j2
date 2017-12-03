@@ -1,11 +1,116 @@
 {% extends 'base.html.j2' %}
 
+{% block head %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+<script>
+
+function sendForm(form) {
+   var formData = new FormData(form);
+
+   formData.append('html', 'it works!'); // Append extra data before send.
+   $("input[type='file']").each( function(index){
+      var use_img = $(this).parent().data("use_image");
+      var F = this.files;
+      if (F && F[0]) {
+         for (var i = 0; i < F.length; i++) {
+            if (use_img[i]) {
+               formData.append("uploads", F[i]);
+            }
+         }
+      }
+   });
+
+   var xhr = new XMLHttpRequest();
+   xhr.open('POST', form.action, true);
+   xhr.onload = function () {
+      window.location.href = "/";
+   };
+
+   xhr.send(formData);
+
+   return false; // Prevent page from submitting.
+}
+
+$(function(ready){
+   function addInput(){
+      $("#img_inputs").append(`<span class = "input_span">
+                                 <input type="file" name="file" accept="image/*" multiple class="img_add">
+                              </span>`);
+   }
+
+   function readImage(location, file, i) {
+      console.log("reading" +file.name)
+      var reader = new FileReader();
+      var image  = new Image();
+
+      reader.readAsDataURL(file);
+      reader.onload = function(_file) {
+         image.src = _file.target.result; // url.createObjectURL(file);
+         image.onload = function() {
+            $(new_location).append(`<img src="${this.src}">`);
+         };
+
+         image.onerror= function() {
+            alert('Invalid file type: '+ file.type);
+            $(location).parent().remove(); //This doesn't seem to work
+         };
+      };
+
+      $(location).before(`<div class="img_remove"></div>`);
+      var new_location = $(location).prev();
+   }
+
+   addInput(); //Creates first input button
+
+   $("#img_inputs").on("change", ".img_add", function (e) {
+      var F = this.files;
+
+      if (F && F[0]) {
+         var use_image = [];
+         for (var i = 0; i < F.length; i++) {
+            readImage(this, F[i], i);
+            use_image[i] = 1;
+         }
+         $(this).parent().data("use_image", use_image)
+      }
+      $(this).hide();
+      addInput();
+
+   });
+
+   $("#img_inputs").on("click", ".img_remove", function (e) {
+      var i = $(this).index();
+      $(this).parent().data("use_image")[i] = 0;
+      console.log( $(this).parent().data("use_image") );
+      $(this).hide('fast');
+
+   });
+
+
+});
+
+</script>
+
+{% endblock %}
+
+
 {% block content %}
 
-<form class = "build" action="/edit/build" method="post" id="build_f">
+<form action="{{ upload_url }}" method="post" enctype="multipart/form-data" id="build_form" >
    <input name="title" id="title" type="text" class="edit"
    placeholder="Untitled Album" />
+   <input type="checkbox" id="public" checked>
+   <label for="public">Public</label>
+   <br>
 </form>
-<button id ="build" form="build_f"> <span> Build <i class="fa fa-scissors" aria-hidden="true"></i> </span></button>
+
+
+
+<div id="img_inputs">
+   <!-- Preview images injected here -->
+</div>
+
+<button id = "build_button" type="submit" onclick="return sendForm(this.form);" value="Build" form="build_form"> <span> Build <i class="fa fa-scissors" aria-hidden="true"></i> </span></button>
 
 {% endblock %}

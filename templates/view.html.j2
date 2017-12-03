@@ -5,7 +5,7 @@
    {% if album.key.parent().get().user_id == user.user_id() %}
       <form class = "edit" action="/edit/{{album.key.urlsafe()}}" method="post">
          <input name="title" id="title" type="text" class="edit"
-         value={{album.title}}/>
+         value={{album.title}}>
          <input type="checkbox" id="public" {%if album.public%} checked {%endif%}>
          <label for="public">Public</label>
          <button type="submit"> Save </button>
@@ -17,11 +17,107 @@
       <h2 id = "sec1"> {{album.title}}</h2>
    {% endif %}
 
-   {{ button.button("pdf", "fa-floppy-o","PDF", "") }}
+   <a href="#" onclick="return xepOnline.Formatter.Format('album',{render:'download', filename:'Your Lazy Album'});">
+           {{ button.button("pdf", "fa-floppy-o","PDF", "") }}
+   </a>
 
-   <p id = "sec2">(Album)</p>
+   <div id = "album">
+      <table style="width:100%">
+      <tr>
+         <th><div id="leftpage_num"></div></th>
+         <td><div id="leftpage">
+            Left page content
+         </div></td>
+         <th><div id="rightpage_num"></div></th>
+         <td><div id="rightpage">
+            Right page content
+         </div></td>
+      </tr>
+      </table>
+      
+      <button id="prev"> Previous page </button>
+      <button id="next"> Next page </button>
+      
+      <script type="text/javascript">
+         // Will change once we determine how to split images between pages.
+         var IMG_PER_PAGE = 2;
 
+         function getPagesHTML(view_num) {
+            if (typeof getPagesHTML.image_urls == 'undefined') {
+               getPagesHTML.image_urls = {{ images|safe }};
+            }
 
+            // view num * the number of images per page * number of pages that will have that many images per page
+            var left_start_index = view_num * IMG_PER_PAGE * 2;
+            var leftHTML = "";
+            for (var i = left_start_index; i < left_start_index + IMG_PER_PAGE; i++) {
+               // Bounds check
+               if (i >= getPagesHTML.image_urls.length) {
+                  break;
+               }
+               leftHTML += "<img src=\"" + getPagesHTML.image_urls[i] + "\"/>";
+            }
 
+            var right_start_index = left_start_index + IMG_PER_PAGE;
+            var rightHTML = "";
+            for (var i = right_start_index; i < right_start_index + IMG_PER_PAGE; i++) {
+               // Bounds check
+               if (i >= getPagesHTML.image_urls.length) {
+                  break;
+               }
+               rightHTML += "<img src=\"" + getPagesHTML.image_urls[i] + "\"/>";
+            }
+            return [leftHTML, rightHTML];
+         }
+
+         function updateAlbum() {
+            // Declares view_num and num_images as "static" variables
+            if (typeof updateAlbum.view_num == 'undefined') {
+               updateAlbum.view_num = 0;
+            }
+            if (typeof updateAlbum.num_images == 'undefined') {
+               // images comes from the context (see main.py)
+               var image_urls = {{ images|safe }};
+               updateAlbum.num_images = image_urls.length;
+            }
+            
+            var direction;
+            var target = event.target || event.srcElement;
+            var direction = target.id;
+            
+            if (direction == 'prev') {
+               if (updateAlbum.view_num > 0) {
+                  updateAlbum.view_num--;
+               }
+            } else {
+               updateAlbum.view_num = (updateAlbum.view_num + 1) % Math.ceil(updateAlbum.num_images / (IMG_PER_PAGE * 2));
+            }
+
+            var leftHTML, rightHTML;
+            [leftHTML, rightHTML] = getPagesHTML(updateAlbum.view_num);
+
+            document.getElementById("leftpage").innerHTML = leftHTML;
+            document.getElementById("rightpage").innerHTML = rightHTML;
+
+            var left_page = updateAlbum.view_num * IMG_PER_PAGE + 1;
+            document.getElementById("leftpage_num").innerHTML = "Page " + left_page;
+            document.getElementById("rightpage_num").innerHTML = "Page " + (left_page + 1);
+         }
+
+         document.getElementById("prev").onclick = updateAlbum;
+         document.getElementById("next").onclick = updateAlbum;
+      </script>
+
+      {% if images %}
+            {% for image in images%}
+                  <img src="{{image}}" />
+            {% endfor %}
+
+      {% else %}
+            <p> No image uploaded </p>
+      {% endif %}
+   </div>
+   <p> Saved html: {{saved_html}} </p>
+   <p> {{album.html}} </p>
 
 {% endblock %}
