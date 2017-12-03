@@ -5,13 +5,11 @@ import os
 import logging
 import jinja2
 
-from google.appengine.api import app_identity
-from google.appengine.ext import ndb
-from google.appengine.api import users
-from google.appengine.api import images
-
-from google.appengine.ext import blobstore
+from google.appengine.ext import ndb, blobstore
+from google.appengine.api import app_identity, users, images
 from google.appengine.ext.webapp import blobstore_handlers
+from google.appengine.api.taskqueue import taskqueue
+
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 
@@ -27,7 +25,7 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
         account = utils.get_account()
         album = models.Album( parent = account.key )
         album.html = str(self.request.get('html')).strip()
-        album.public = album.public = True if self.request.get('public') else False
+        album.public = album.public = True if self.request.get('public') else False #bool() not working
         if title :
             album.title = title
 
@@ -54,6 +52,11 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
 
         album.put()
         utils.upload_file_to_cloud_storage(account, self.get_uploads()[0], album.key.urlsafe())
+
+        task = taskqueue.add(
+           url='/construction',
+           params={'album': album.key.urlsafe()},
+           transactional = True)
 
         logging.info("I should redirect")
         #redirect moved to javascript, browser doesn't honor ajax redirects
