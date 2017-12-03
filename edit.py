@@ -13,8 +13,6 @@ from google.appengine.api import images
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 
-from google.cloud import storage
-
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 
 template_env = jinja2.Environment(
