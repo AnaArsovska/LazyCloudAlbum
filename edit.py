@@ -27,6 +27,7 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
         account = utils.get_account()
         album = models.Album( parent = account.key )
         album.html = str(self.request.get('html')).strip()
+        album.public = album.public = True if self.request.get('public') else False
         if title :
             album.title = title
 
@@ -41,7 +42,7 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
         if thumbnail_blob_key:
             thumbnail_url = images.get_serving_url(thumbnail_blob_key, size=200, crop=True)
             album.thumbnail_url = thumbnail_url
-            
+
             (success, html) = utils.vision_api_web_detection(self.get_uploads()[0])
             if success:
                 album.html = html
@@ -76,7 +77,7 @@ class DeleteHandler(webapp2.RequestHandler):
         if album and album.key.parent().get().user_id == users.get_current_user().user_id():
             utils.clear_album_data(album)
             album.key.delete()
-	
+
         self.redirect('/')
 
 class EditHandler(webapp2.RequestHandler):
