@@ -6,9 +6,10 @@
 <script>
 
 function sendForm(form) {
+   //sends all images whose previews are still visible to BuildHandler
+
    var formData = new FormData(form);
 
-   formData.append('html', 'it works!'); // Append extra data before send.
    $("input[type='file']").each( function(index){
       var use_img = $(this).parent().data("use_image");
       var F = this.files;
@@ -20,6 +21,11 @@ function sendForm(form) {
          }
       }
    });
+
+   if (!formData.has("uploads")) {
+      $("#build_button").after("<span class='warning'>Please upload at least one image</span>");
+      return false;
+   }
 
    var xhr = new XMLHttpRequest();
    xhr.open('POST', form.action, true);
@@ -33,13 +39,16 @@ function sendForm(form) {
 }
 
 $(function(ready){
+
    function addInput(){
+      //Creates a new file input button and span
       $("#img_inputs").append(`<span class = "input_span">
                                  <input type="file" name="file" accept="image/*" multiple class="img_add">
                               </span>`);
    }
 
    function readImage(location, file, i) {
+      // Creates preview of image
       console.log("reading" +file.name)
       var reader = new FileReader();
       var image  = new Image();
@@ -57,13 +66,14 @@ $(function(ready){
          };
       };
 
-      $(location).before(`<div class="img_remove"></div>`);
-      var new_location = $(location).prev();
+      $(location).before(`<div class="img_remove"></div>`); //Creates div to house image, ensures order
+      var new_location = $(location).prev(); //selects div to place image
    }
 
    addInput(); //Creates first input button
 
    $("#img_inputs").on("change", ".img_add", function (e) {
+      //waits for file input to be selected then previews images
       var F = this.files;
 
       if (F && F[0]) {
@@ -80,6 +90,7 @@ $(function(ready){
    });
 
    $("#img_inputs").on("click", ".img_remove", function (e) {
+      //removes preview and marks image as removed
       var i = $(this).index();
       $(this).parent().data("use_image")[i] = 0;
       console.log( $(this).parent().data("use_image") );

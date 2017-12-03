@@ -388,3 +388,10 @@ input[type="file"]{
       }
    }
 }
+
+.warning{
+   grid-row: 4;
+   grid-column: 5/9;
+   text-align: center;
+   color: $accent-dark;
+}
