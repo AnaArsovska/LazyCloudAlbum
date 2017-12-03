@@ -3,7 +3,7 @@ import models
 import utils
 import os
 import logging
-Import jinja2
+import jinja2
 
 from google.appengine.api import app_identity
 from google.appengine.ext import ndb
@@ -44,7 +44,7 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
             thumbnail_url = images.get_serving_url(thumbnail_blob_key, size=200, crop=True)
             album.thumbnail_url = thumbnail_url
             
- (success, html) = utils.vision_api_web_detection(self.get_uploads()[0])
+            (success, html) = utils.vision_api_web_detection(self.get_uploads()[0])
             if success:
                 album.html = html
             else:
@@ -77,7 +77,7 @@ class DeleteHandler(webapp2.RequestHandler):
         album = utils.get_album_by_key(album_key)
         if album and album.key.parent().get().user_id == users.get_current_user().user_id():
             utils.clear_album_data(album)
-album.key.delete()
+            album.key.delete()
 	
         self.redirect('/')
 

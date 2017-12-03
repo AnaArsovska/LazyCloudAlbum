@@ -26,13 +26,11 @@
       <tr>
          <th><div id="leftpage_num"></div></th>
          <td><div id="leftpage">
-            {% for image in images%}
-                  <img src="{{image}}" />
-            {% endfor %}
+            Left page content
          </div></td>
          <th><div id="rightpage_num"></div></th>
          <td><div id="rightpage">
-            <p> No image uploaded </p>
+            Right page content
          </div></td>
       </tr>
       </table>
@@ -86,6 +84,14 @@
             var direction;
             var target = event.target || event.srcElement;
             var direction = target.id;
+            
+            if (direction == 'prev') {
+               if (updateAlbum.view_num > 0) {
+                  updateAlbum.view_num--;
+               }
+            } else {
+               updateAlbum.view_num = (updateAlbum.view_num + 1) % Math.ceil(updateAlbum.num_images / (IMG_PER_PAGE * 2));
+            }
 
             var leftHTML, rightHTML;
             [leftHTML, rightHTML] = getPagesHTML(updateAlbum.view_num);
@@ -93,11 +99,9 @@
             document.getElementById("leftpage").innerHTML = leftHTML;
             document.getElementById("rightpage").innerHTML = rightHTML;
 
-            if (direction == 'prev' && updateAlbum.view_num > 0) {
-               updateAlbum.view_num--;
-            } else {
-               updateAlbum.view_num = (updateAlbum.view_num + 1) % Math.ceil(updateAlbum.num_images / (IMG_PER_PAGE * 2));
-            }
+            var left_page = updateAlbum.view_num * IMG_PER_PAGE + 1;
+            document.getElementById("leftpage_num").innerHTML = "Page " + left_page;
+            document.getElementById("rightpage_num").innerHTML = "Page " + (left_page + 1);
          }
 
          document.getElementById("prev").onclick = updateAlbum;

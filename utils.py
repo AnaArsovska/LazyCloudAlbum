@@ -51,14 +51,14 @@ def get_account(user_id=None):
             return None
         user_id = user.user_id()
 
-#Get account
-key = ndb.Key('Account', user_id)
+    #Get account
+    key = ndb.Key('Account', user_id)
     account = key.get()
 
-#If no account for user exists, make one.
-if not account:
-    account = Account(user_id = user_id)
-    account.key = key
+    #If no account for user exists, make one.
+    if not account:
+        account = Account(user_id = user_id)
+        account.key = key
         account.put()
     return account
 
@@ -115,10 +115,10 @@ def clear_album_data(album):
         storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + cloudstorage_filename,
                                'DELETE')
             
-            cloudstorage_filename = get_html_filename(album.key.parent().get(), album.key.urlsafe())
-            cloudstorage_filename = cloudstorage_filename.replace("/","%2f")
-            storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + cloudstorage_filename,
-                                   'DELETE')
+        cloudstorage_filename = get_html_filename(album.key.parent().get(), album.key.urlsafe())
+        cloudstorage_filename = cloudstorage_filename.replace("/","%2f")
+        storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + cloudstorage_filename,
+                               'DELETE')
 
 def get_html_from_cloud_storage(account, album_key):
     storage_api = cloudstorage.storage_api._get_storage_api(None)
@@ -127,11 +127,11 @@ def get_html_from_cloud_storage(account, album_key):
     file_name = file_name.replace("/", "%2f")
     (status, headers, content) = storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + file_name + "?alt=media",'GET')
         
-        # Returns (success, response)
-        if status == 200:
-            return (True, content)
-                else:
-                    return (False, "Error: No HTML found for the given user")
+    # Returns (success, response)
+    if status == 200:
+        return (True, content)
+    else:
+        return (False, "Error: No HTML found for the given user")
 
 def upload_file_to_cloud_storage(account, info, album_key):
     data = blobstore.BlobReader(info.key()).read()
@@ -141,13 +141,13 @@ def upload_file_to_cloud_storage(account, info, album_key):
     headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
     storage_api.do_request("https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name=" + image_name,'POST', headers, data)
     
-    my_message = "Hello there world! I am the saved HTML for user " + account.user_id + " for album " str(album_key)
+    my_message = "Hello there world! I am the saved HTML for user " + account.user_id + " for album " + str(album_key)
     
     headers =  {"Content-Type": "text/plain"}
-        html_content_name = get_html_filename(account, album_key)
-        logging.info("Saving html with filename:" + html_content_name)
-        storage_api.do_request("https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name=" + html_content_name,
-                               'POST', headers, my_message)
+    html_content_name = get_html_filename(account, album_key)
+    logging.info("Saving html with filename:" + html_content_name)
+    storage_api.do_request("https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name=" + html_content_name,
+                           'POST', headers, my_message)
 
 def vision_api_web_detection(info):
     """This is the minimal code to accomplish a web detect request to the google vision api
@@ -172,8 +172,8 @@ def vision_api_web_detection(info):
         except yaml.YAMLError as exc:
             print(exc)
 
-payload = {
-    "requests": [
+    payload = {
+      "requests": [
                  {
                  "image": {
                  "content": image_str
@@ -187,24 +187,21 @@ payload = {
                  ]
         }
             
-            response = fetch(
-                             "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
-                             method=POST,
-                             payload=dumps(payload),
-                             headers={"Content-Type": "application/json"}
-                             )
-                result = loads(response.content)
-                #main_colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors'][0:3]
-                
-                # Returns (success, response). Response is empty if an error occurred
-                try:
-                    label = result[u'responses'][0][u'labelAnnotations'][0][u'description']
-                    return (True, label)
-                        except KeyError:
-                            return (False, "")
-
-
-
+    response = fetch(
+                     "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
+                     method=POST,
+                     payload=dumps(payload),
+                     headers={"Content-Type": "application/json"}
+                     )
+    result = loads(response.content)
+    #main_colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors'][0:3]
+    
+    # Returns (success, response). Response is empty if an error occurred
+    try:
+        label = result[u'responses'][0][u'labelAnnotations'][0][u'description']
+        return (True, label)
+    except KeyError:
+        return (False, "")
 
 def vision_api_web_detection2(info):
     """ Test for vision api
@@ -222,20 +219,20 @@ def vision_api_web_detection2(info):
     with open("config.yaml", 'r') as stream:
         config = yaml.load(stream)
             
-            payload = {
-                "requests": [
-                             {
-                             "image": {
-                             "content": string
-                             },
-                             "features": [
-                                          {
-                                          "type": "IMAGE_PROPERTIES",
-                                          }
-                                          ]
-                             }
-                             ]
-}
+    payload = {
+        "requests": [
+                     {
+                     "image": {
+                     "content": string
+                     },
+                     "features": [
+                                  {
+                                  "type": "IMAGE_PROPERTIES",
+                                  }
+                                ]
+                     }
+                    ]
+    }
     
     response = fetch(
                      "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
@@ -243,16 +240,16 @@ def vision_api_web_detection2(info):
                      payload=dumps(payload),
                      headers={"Content-Type": "application/json"}
                      )
-        result = loads(response.content)
-        colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
-        main_colors = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:5]
-        rgb_colors = []
-        for color in main_colors:
-            info = color[u'color']
-            rgb = [info[u'red'], info[u'green'], info[u'blue'],]
-            rgb_colors.append(rgb)
+    result = loads(response.content)
+    colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
+    main_colors = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:5]
+    rgb_colors = []
+    for color in main_colors:
+        info = color[u'color']
+        rgb = [info[u'red'], info[u'green'], info[u'blue'],]
+        rgb_colors.append(rgb)
 
-palette_response = fetch(
+    palette_response = fetch(
                          'http://colormind.io/api/',
                          method=POST,
                          payload= '{"input": %s , "model":"default" }' % (str(rgb_colors)),
