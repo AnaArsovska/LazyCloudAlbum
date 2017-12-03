@@ -41,12 +41,12 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
             thumbnail_url = images.get_serving_url(thumbnail_blob_key, size=200, crop=True)
             album.thumbnail_url = thumbnail_url
 
-            (success, html) = utils.vision_api_web_detection(self.get_uploads()[0])
-            if success:
-                album.html = html
-            else:
-                self.redirect('/edit/error')
-                return
+            # this is throwing mad RequestTooLargeErrors -> (success, html) = utils.vision_api_web_detection(self.get_uploads()[0])
+            #if success:
+            #    album.html = html
+            #else:
+            #    self.redirect('/edit/error')
+            #    return
         else:
             album.thumbnail_url = ""
 
@@ -56,6 +56,7 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
         task = taskqueue.add(
            url='/construction',
            params={'album': album.key.urlsafe()},
+           target = 'worker',
            transactional = True)
 
         logging.info("I should redirect")

@@ -1,0 +1,8 @@
+runtime: python27
+threadsafe: true
+service: worker
+
+handlers:
+- url: /construction
+  script: construction.application
+  login: admin
