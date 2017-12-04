@@ -14,6 +14,8 @@ from google.appengine.ext import vendor
 vendor.add('lib')
 import cloudstorage
 
+UPLOAD_BASE_URL = "https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name="
+
 def getContext(page):
     """ Gathers necessary information to populate pages
 
@@ -125,7 +127,6 @@ def clear_album_data(album):
 def get_html_from_cloud_storage(account, album_key):
     storage_api = cloudstorage.storage_api._get_storage_api(None)
     file_name = get_html_filename(account, album_key)
-
     file_name = file_name.replace("/", "%2f")
     (status, headers, content) = storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + file_name + "?alt=media",'GET')
 
@@ -135,22 +136,23 @@ def get_html_from_cloud_storage(account, album_key):
     else:
         return (False, "Error: No HTML found for the given user")
 
-
-def upload_file_to_cloud_storage(account, info, album_key):
-    data = blobstore.BlobReader(info.key()).read()
+def upload_text_file_to_cloudstorage(filename, contents):
     storage_api = cloudstorage.storage_api._get_storage_api(None)
-
-    image_name = get_photo_filename(account, album_key, info)
-    headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
-    storage_api.do_request("https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name=" + image_name,'POST', headers, data)
-
-    my_message = "Hello there world! I am the saved HTML for user " + account.user_id + " for album " + str(album_key)
-
     headers =  {"Content-Type": "text/plain"}
-    html_content_name = get_html_filename(account, album_key)
-    logging.info("Saving html with filename:" + html_content_name)
-    storage_api.do_request("https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name=" + html_content_name,
-                           'POST', headers, my_message)
+    logging.info("Saving text file with filename:" + filename)
+    storage_api.do_request(UPLOAD_BASE_URL + filename, 'POST', headers, contents)
+    logging.info("Wrote textfile with filename: " + filename)
+
+
+def upload_album_images_to_cloud_storage(account, album, images):
+    storage_api = cloudstorage.storage_api._get_storage_api(None)
+    for image in images:
+        data = blobstore.BlobReader(image.key()).read()
+
+        image_name = get_photo_filename(account, album.key.urlsafe(), image)
+        headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
+        storage_api.do_request(UPLOAD_BASE_URL + image_name, 'POST', headers, data)
+
 
 def generate_dummy_html(image_keys):
   IMG_PER_PAGE = 3 # dummy value for now

@@ -47,13 +47,16 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
             #else:
             #    self.redirect('/edit/error')
             #    return
-            album.html = utils.generate_dummy_html(album.images)
         else:
             album.thumbnail_url = ""
 
         album.put()
-        utils.upload_file_to_cloud_storage(account, self.get_uploads()[0], album.key.urlsafe())
-        #utils.upload_album_info_to_cloud_storage(account, album, self.get_uploads())
+        
+        utils.upload_album_images_to_cloud_storage(account, album, self.get_uploads())
+        
+        html = utils.generate_dummy_html(album.images)
+        filename = utils.get_html_filename(account, album.key.urlsafe())
+        utils.upload_text_file_to_cloudstorage(filename, html)
 
         task = taskqueue.add(
            url='/construction',
