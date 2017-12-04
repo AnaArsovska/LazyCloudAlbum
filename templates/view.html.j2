@@ -14,6 +14,11 @@
 
 <button id = "delete" formaction="/edit/delete/{{album.key.urlsafe()}}" > <span> Delete <i class="fa fa-trash-o" aria-hidden="true"></i> </span></button>
 
+<div class="fb-share-button"
+    data-href="/view/{{album.key.urlsafe()}}"
+    data-layout="button_count">
+</div>
+
 {% else %}
 <h2 id = "sec1"> {{album.title}}</h2>
 {% endif %}
