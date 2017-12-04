@@ -68,11 +68,9 @@ class ViewPage(webapp2.RequestHandler):
             album_key: URL safe version of the album key
 
             """
-        logging.info("In the viewpage handler...")
         context = utils.getContext(self)
         album = utils.get_album_by_key(album_key)
         if album:
-            logging.info("Album loaded fine...")
             # Show album only if it is public or the current user is the owner
             if album.public or album.key.parent().get().user_id == context['user'].user_id() :
                 context['album'] = album
@@ -84,9 +82,7 @@ class ViewPage(webapp2.RequestHandler):
                 context['images'] = image_urls
                 # get_html_from_cloud_storage returns the tuple (success, content). We ignore the first value and just take
                 # the content since it returns an error message for "content" if it did not succeed
-                logging.info("Going to load the saved html now")
                 (_, context['saved_html']) = utils.get_html_from_cloud_storage(album.key.parent().get(), album.key.urlsafe())
-                logging.info("Going to load the view.html template now")
                 template = template_env.get_template('view.html.j2')
             else:
                 #Private album
