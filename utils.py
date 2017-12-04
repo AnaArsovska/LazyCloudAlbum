@@ -3,10 +3,12 @@ from google.appengine.ext import ndb
 from models import *
 from json import dumps, loads
 from google.appengine.api.urlfetch import fetch, POST
-import yaml
+from google.appengine.api import images
 from google.appengine.ext import blobstore
+from google.appengine.ext.blobstore import BlobKey
 import base64
 import logging
+import yaml
 
 from google.appengine.ext import vendor
 vendor.add('lib')
@@ -133,6 +135,7 @@ def get_html_from_cloud_storage(account, album_key):
     else:
         return (False, "Error: No HTML found for the given user")
 
+
 def upload_file_to_cloud_storage(account, info, album_key):
     data = blobstore.BlobReader(info.key()).read()
     storage_api = cloudstorage.storage_api._get_storage_api(None)
@@ -148,6 +151,19 @@ def upload_file_to_cloud_storage(account, info, album_key):
     logging.info("Saving html with filename:" + html_content_name)
     storage_api.do_request("https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name=" + html_content_name,
                            'POST', headers, my_message)
+
+def generate_dummy_html(image_keys):
+  IMG_PER_PAGE = 3 # dummy value for now
+  html = ""
+  for i in xrange(0, len(image_keys), IMG_PER_PAGE):
+    page_imgs = image_keys[i:i+IMG_PER_PAGE]
+    img_tags = ""
+    for image in page_imgs:
+      image_url = images.get_serving_url(BlobKey(image), size=300)
+      img_tags += ("<img src=\"" + image_url + "\"/>")
+    html += ("<div class=\"page\"><div class=\"album_square\"><div class=\"container\">" + img_tags + "</div></div></div>")
+  logging.info("Generated html: " + html)
+  return html
 
 def vision_api_web_detection(info):
     """This is the minimal code to accomplish a web detect request to the google vision api

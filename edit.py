@@ -20,7 +20,7 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
     @ndb.transactional
     def post(self):
         """ Build Handler constructs album based on uploaded pictures """
-        logging.info(str(self.request.get('html')).strip())
+        logging.info("html from request: " + str(self.request.get('html')).strip())
         title = str(self.request.get('title')).strip()
         account = utils.get_account()
         album = models.Album( parent = account.key )
@@ -47,11 +47,13 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
             #else:
             #    self.redirect('/edit/error')
             #    return
+            album.html = utils.generate_dummy_html(album.images)
         else:
             album.thumbnail_url = ""
 
         album.put()
         utils.upload_file_to_cloud_storage(account, self.get_uploads()[0], album.key.urlsafe())
+        #utils.upload_album_info_to_cloud_storage(account, album, self.get_uploads())
 
         task = taskqueue.add(
            url='/construction',
