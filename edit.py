@@ -24,7 +24,6 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
         title = str(self.request.get('title')).strip()
         account = utils.get_account()
         album = models.Album( parent = account.key )
-        album.html = str(self.request.get('html')).strip()
         album.public = album.public = True if self.request.get('public') else False #bool() not working
         if title :
             album.title = title

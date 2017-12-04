@@ -63,10 +63,10 @@ class CreatePage(webapp2.RequestHandler):
 class ViewPage(webapp2.RequestHandler):
     def get(self, album_key):
         """ Views album specified by URL
-            
+
             Args:
             album_key: URL safe version of the album key
-            
+
             """
         logging.info("In the viewpage handler...")
         context = utils.getContext(self)
@@ -96,10 +96,18 @@ class ViewPage(webapp2.RequestHandler):
             template = template_env.get_template('nothing_here.html.j2')
         self.response.out.write(template.render(context))
 
+
+class test(webapp2.RequestHandler):
+    def get(self):
+        """ Loads test page """
+        template = template_env.get_template('test.html.j2')
+        self.response.out.write(template.render())
+
 application = webapp2.WSGIApplication([
                                        (r'/about', AboutPage),
                                        (r'/how_to', HowToPage),
                                        (r'/create', CreatePage),
                                        (r'/view/(.*)', ViewPage),
                                        (r'/contact', ContactPage),
+                                       (r'/test', test),
                                        (r'/', MainPage)], debug=True)
