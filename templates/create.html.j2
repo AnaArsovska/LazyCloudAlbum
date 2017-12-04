@@ -23,18 +23,34 @@ function sendForm(form) {
    });
 
    if (!formData.has("uploads")) {
-      $("#build_button").after("<span class='warning'>Please upload at least one image</span>");
+      $("#build_button").after("<span class='message warning'>Please upload at least one image</span>");
       return false;
    }
 
    var xhr = new XMLHttpRequest();
    xhr.open('POST', form.action, true);
    xhr.onload = function () {
-      window.location.href = "/";
+      $(".message").fadeOut("slow");
+      $("#content").append(`<span class='message redirect'><h2>
+                              <i class ='fa fa-book' aria-hidden='hidden'></i>
+                              </br>
+                              We're putting your album together </h2>
+                              You'll recieve an email when its's done
+                              <br/><br/>
+                              <a href = '/'> Redirecting you back to gallery...</a> </span>`);
+      $(".redirect").hide().delay(600).fadeIn("slow");
+      setTimeout(function(){ window.location.href = "/"; }, 5000);
    };
 
    xhr.send(formData);
-
+   $("#content").children().fadeOut("slow");
+   $("#content").append(`<span class='message'><h2>
+                           <i class="fa fa-spinner fa-spin"></i>
+                           </br>
+                           Uploading Pictures </h2>
+                           This may take a momement`);
+   $(".message:not(.warning)").hide().delay(600).fadeIn("slow");
+   console.log(formData.get("uploads"));
    return false; // Prevent page from submitting.
 }
 
