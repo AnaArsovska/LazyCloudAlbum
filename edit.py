@@ -85,8 +85,7 @@ class DeleteHandler(webapp2.RequestHandler):
         if album and album.key.parent().get().user_id == users.get_current_user().user_id():
             utils.clear_album_data(album)
             album.key.delete()
-
-        self.redirect('/')
+        #redirect moved to view.html.j2
 
 class EditHandler(webapp2.RequestHandler):
     @ndb.transactional

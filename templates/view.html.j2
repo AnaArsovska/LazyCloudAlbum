@@ -11,7 +11,9 @@
    <button type="submit"> Save </button>
 </form>
 
-{{ button.button("delete", "fa-trash-o","Delete", "/edit/delete/"+album.key.urlsafe() ) }}
+
+
+<button id = "delete" formaction="/edit/delete/{{album.key.urlsafe()}}" > <span> Delete <i class="fa fa-trash-o" aria-hidden="true"></i> </span></button>
 
 {% else %}
 <h2 id = "sec1"> {{album.title}}</h2>
@@ -38,22 +40,46 @@ function updateAlbum(dir) {
    // Declares view_num and num_images as "static" variables
    if (typeof updateAlbum.view_num == 'undefined') {
       updateAlbum.view_num = 0;
+      updateAlbum.pages = $(".page").length - 2; //Account for pages on screen
    }
-   if (dir){
-      updateAlbum.view_num += 1;
-   } else {
-      updateAlbum.view_num -= 1;
+   if (dir & updateAlbum.view_num < updateAlbum.pages ){
+      updateAlbum.view_num += 2;
+   } else if (!dir & updateAlbum.view_num > 0) {
+      updateAlbum.view_num -= 2;
    }
-   $(".page").animate({"left": 50*2*updateAlbum.view_num + "%"}, "slow");
+   $(".page").animate({"left": -50*updateAlbum.view_num + "%"}, "slow", "swing");
    console.log(updateAlbum.view_num);
 }
 
 $(".arrow").click( function(){
    if ($(this).hasClass("right")){
-      updateAlbum(false); //move to right pages
+      updateAlbum(true); //move all pages left
    } else {
-      updateAlbum(true); //move to left pages
+      updateAlbum(false); //move all pages right
    }
+});
+
+$("#delete").click( function(){
+   console.log("delete");
+   var xhr = new XMLHttpRequest();
+   xhr.open('POST', $(this).attr("formaction"));
+   xhr.onload = function () {
+      $(".message").fadeOut("slow");
+      $("#content").append(`<span class='message redirect'><h2>
+                              <i class ='fa fa-trash-o' aria-hidden='hidden'></i>
+                              </br>
+                              All cleared out! </h2>
+                              <br/><br/>
+                              <a href = '/'> Redirecting you back to gallery...</a> </span>`);
+      $(".redirect").hide().delay(600).fadeIn("slow");
+      setTimeout(function(){ window.location.href = "/"; }, 5000);
+   };
+   xhr.send();
+   $("#content").children().fadeOut("slow");
+   $("#content").append(`<span class='message'><h2>
+                           <i class="fa fa-spinner fa-spin"></i>
+                           </br>
+                           Deleting </h2>`);
 });
 
 </script>
