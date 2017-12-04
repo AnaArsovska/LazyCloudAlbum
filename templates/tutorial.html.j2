@@ -4,6 +4,12 @@
 {% block content %}
    This is a tutorial for users without albums.
 
-   {{ button.button("create", "fa-scissors","Create", "/create", "get") }}
+   <ul>
+      <li class = "next_album">
+         <a href="/create" style="padding-bottom: 4em;">
+            <div class = "square"><div class = "content"> + </div> <div class = "content" id="up"> + </div></div>
+         </a>
+      </li>
+   </ul>
 
 {% endblock %}

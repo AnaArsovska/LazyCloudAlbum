@@ -35,7 +35,7 @@ function sendForm(form) {
                               <i class ='fa fa-book' aria-hidden='hidden'></i>
                               </br>
                               We're putting your album together </h2>
-                              You'll recieve an email when its's done
+                              You'll recieve an email when it's ready.
                               <br/><br/>
                               <a href = '/'> Redirecting you back to gallery...</a> </span>`);
       $(".redirect").hide().delay(600).fadeIn("slow");
@@ -138,6 +138,6 @@ $(function(ready){
    <!-- Preview images injected here -->
 </div>
 
-<button id = "build_button" type="submit" onclick="return sendForm(this.form);" value="Build" form="build_form"> <span> Build <i class="fa fa-scissors" aria-hidden="true"></i> </span></button>
+<button class="button" id="build_button" type="submit" onclick="return sendForm(this.form);" value="Build" form="build_form"> <span> Build <i class="fa fa-scissors" aria-hidden="true"></i> </span></button>
 
 {% endblock %}
