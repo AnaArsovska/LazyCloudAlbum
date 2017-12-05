@@ -3,6 +3,6 @@ threadsafe: true
 service: worker
 
 handlers:
-- url: /construction
+- url: /.*
   script: construction.application
   login: admin

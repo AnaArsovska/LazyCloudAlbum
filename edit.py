@@ -83,8 +83,13 @@ class DeleteHandler(webapp2.RequestHandler):
         """
         album = utils.get_album_by_key(album_key)
         if album and album.key.parent().get().user_id == users.get_current_user().user_id():
-            utils.clear_album_data(album)
-            album.key.delete()
+            album.hidden = True
+            album.put()
+            task = taskqueue.add(
+               url='/delete',
+               params={'album': album_key},
+               target = 'worker',
+               transactional = True)
         #redirect moved to view.html.j2
 
 class EditHandler(webapp2.RequestHandler):

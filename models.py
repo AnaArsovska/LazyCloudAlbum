@@ -11,3 +11,4 @@ class Album(ndb.Model):
     thumbnail_url = ndb.StringProperty(default="")
     images = ndb.StringProperty(repeated=True)
     public = ndb.BooleanProperty(default = True)
+    hidden = ndb.BooleanProperty(default = False)

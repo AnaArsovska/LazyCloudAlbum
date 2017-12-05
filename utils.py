@@ -81,7 +81,7 @@ def get_albums(user_id):
             return None
         user_id = user.user_id()
 
-    a = Album.query(ancestor = ndb.Key('Account', user_id) ).order(-Album.creation_date)
+    a = Album.query(Album.hidden == False, ancestor = ndb.Key('Account', user_id) ).order(-Album.creation_date)
     return a.fetch()
 
 def get_album_by_key(urlsafe_key):
