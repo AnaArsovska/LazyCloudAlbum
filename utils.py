@@ -159,22 +159,37 @@ def upload_album_images_to_cloud_storage(account, album, images):
         image_name = get_photo_filename(account, album.key.urlsafe(), image)
         headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
         (status, headers, content) = storage_api.do_request(UPLOAD_BASE_URL_CS + image_name, 'POST', headers, data)
-        if status == 200:
-          logging.info("Uploading image with filename " + image_name + " succeeded")
-        else:
+        if status != 200:
           logging.error("Uploading image with filename " + image_name + " failed with status code " + status + " Headers: " + headers)
 
 
-def generate_dummy_html(image_keys):
+def generate_dummy_html(account, album_key, image_keys):
   IMG_PER_PAGE = 3 # dummy value for now
   html = ""
   for i in xrange(0, len(image_keys), IMG_PER_PAGE):
     page_imgs = image_keys[i:i+IMG_PER_PAGE]
     img_tags = ""
+    colors = get_dominant_colors(page_imgs)
+
+    i = 0
     for image in page_imgs:
       image_url = images.get_serving_url(BlobKey(image), size=300)
-      img_tags += ("<img src=\"" + image_url + "\"/>")
-    html += ("<div class=\"page\"><div class=\"album_square\"><div class=\"container\">" + img_tags + "</div></div></div>")
+      image_filename = get_photo_filename_by_key(account, album_key, image)
+      color = str( (colors[i][0], colors [i][1], colors[i][2]))
+      logging.info("Got color for image: " + color)
+      img_tags += """<img src='%s' style='background-color: rgb%s'/>""" % (image_url, color)
+      i += 1
+
+    rgb_sum = sum(colors[3])
+    if rgb_sum > (128 * 3):
+      border = "black"
+    else:
+      border = "white"
+    color = str( (colors[3][0], colors [3][1], colors[3][2]))
+
+    # class container black or container white
+    html += """<div class='page'><div class='album_square'><div class='container %s' style='background-color: rgb%s'>%s</div></div></div>""" % (border, color, img_tags)
+
   logging.info("Generated html: " + html)
   return html
 
@@ -232,7 +247,71 @@ def vision_api_web_detection(info):
     except KeyError:
         return (False, "")
 
-def vision_api_web_detection2(info):
+def get_dominant_colors(image_keys):
+
+
+    with open("config.yaml", 'r') as stream:
+        config = yaml.load(stream)
+
+    requests = []
+    for image_key in image_keys:
+      data = blobstore.BlobReader(image_key).read()
+      string = base64.b64encode(data)
+      requests.append({
+                     "image": {
+                      "content": string
+
+                     },
+                     "features": [
+                                  {
+                                  "type": "IMAGE_PROPERTIES",
+                                  }
+                                ]
+                     })
+    payload = {
+        "requests": requests
+    }
+
+    response = fetch(
+                     "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
+                     method=POST,
+                     payload=dumps(payload),
+                     headers={"Content-Type": "application/json"}
+                     )
+    results = loads(response.content)
+    logging.info("Result from vision api:")
+    logging.info(results)
+
+    rgb_colors = []
+    reds = []
+    greens = []
+    blues = []
+    for i in xrange(0, len(image_keys)):
+      colors = results[u'responses'][i][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
+      #main_color = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0]
+      main_color = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0]
+      info = main_color[u'color']
+      rgb = [info[u'red'], info[u'green'], info[u'blue']]
+      reds.append(rgb[0])
+      greens.append(rgb[1])
+      blues.append(rgb[2])
+
+      rgb_colors.append(rgb)
+
+    average_rgb = [ sum(reds)/len(reds), sum(greens)/len(greens), sum(blues)/len(blues)]
+    rgb_colors.append(average_rgb)
+
+    palette_response = fetch(
+                         'http://colormind.io/api/',
+                         method=POST,
+                         payload= '{"input": %s , "model":"default" }' % (str(rgb_colors)),
+                         headers={"Content-Type": "application/json"}
+                         )
+    palette = loads(palette_response.content)[u'result']
+    return palette
+
+
+def vision_api_web_detection_colors(info):
     """ Test for vision api
 
         Args:
@@ -242,17 +321,31 @@ def vision_api_web_detection2(info):
 
         """
 
-    data = blobstore.BlobReader(info.key()).read()
+    data = blobstore.BlobReader(info).read()
     string = base64.b64encode(data)
 
     with open("config.yaml", 'r') as stream:
         config = yaml.load(stream)
 
+    #file_name = file_name.replace("/", "%2f")
+    #logging.info("Uri: " + ("gs://%s/%s" % (BUCKET_NAME, file_name)))
     payload = {
         "requests": [
                      {
                      "image": {
-                     "content": string
+                      "content": string
+                      #"source": { "imageUri": "gs://%s/%s" % (BUCKET_NAME, file_name) }
+                     },
+                     "features": [
+                                  {
+                                  "type": "IMAGE_PROPERTIES",
+                                  }
+                                ]
+                     },
+                     {
+                     "image": {
+                      "content": string
+                      #"source": { "imageUri": "gs://%s/%s" % (BUCKET_NAME, file_name) }
                      },
                      "features": [
                                   {
@@ -270,23 +363,28 @@ def vision_api_web_detection2(info):
                      headers={"Content-Type": "application/json"}
                      )
     result = loads(response.content)
-    colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
-    main_colors = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:5]
-    rgb_colors = []
-    for color in main_colors:
-        info = color[u'color']
-        rgb = [info[u'red'], info[u'green'], info[u'blue'],]
-        rgb_colors.append(rgb)
+    logging.info("Result from vision api:")
+    logging.info(result)
+    # colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
+    # main_colors = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:5]
+    # rgb_colors = []
+    # for color in main_colors:
+    #     info = color[u'color']
+    #     rgb = [info[u'red'], info[u'green'], info[u'blue']]
+    #     rgb_colors.append(rgb)
 
-    palette_response = fetch(
-                         'http://colormind.io/api/',
-                         method=POST,
-                         payload= '{"input": %s , "model":"default" }' % (str(rgb_colors)),
-                         headers={"Content-Type": "application/json"}
-                         )
-    palette = loads(palette_response.content)[u'result']
+    # palette_response = fetch(
+    #                      'http://colormind.io/api/',
+    #                      method=POST,
+    #                      payload= '{"input": %s , "model":"default" }' % (str(rgb_colors)),
+    #                      headers={"Content-Type": "application/json"}
+    #                      )
+    # palette = loads(palette_response.content)[u'result']
 
-    return str(palette) #result[u'responses'][0][u'imagePropertiesAnnotation'][0][u'description']
+    # logging.info("Got the palette: " + str(palette))
+
+    #return palette #result[u'responses'][0][u'imagePropertiesAnnotation'][0][u'description']
+    return (0,0,0)
 
 def send_album_email(name, email, album_key):
     logging.info("sending mail!")
@@ -297,5 +395,5 @@ def send_album_email(name, email, album_key):
         to = email,
         #email template found at https://github.com/leemunroe/responsive-html-email-template
         body = """
-        """ 
+        """
          )

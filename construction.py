@@ -2,7 +2,6 @@ import webapp2
 import utils
 import logging
 
-
 from google.appengine.api import images
 from google.appengine.ext import blobstore, ndb
 from google.appengine.ext.blobstore import BlobKey
@@ -22,6 +21,12 @@ class Construct(webapp2.RequestHandler):
             logging.info(h)
             ratio[image_file] = float(h)/float(w)
         logging.info(ratio)
+        logging.info(album.title)
+
+        account = album.key.parent().get()
+        html = utils.generate_dummy_html(account, album.key.urlsafe(), album.images)
+        filename = utils.get_html_filename(account, album.key.urlsafe())
+        utils.upload_text_file_to_cloudstorage(filename, html)
         #utils.send_album_email("mrgnmcsmith@gmail.com", "Album")
 
 class Delete(webapp2.RequestHandler):
