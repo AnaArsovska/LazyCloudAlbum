@@ -386,12 +386,14 @@ def vision_api_web_detection_colors(info):
     #return palette #result[u'responses'][0][u'imagePropertiesAnnotation'][0][u'description']
     return (0,0,0)
 
-def send_album_email(email, title):
+def send_album_email(name, email, album_key):
     logging.info("sending mail!")
+    album = get_album_by_key(album_key)
     mail.send_mail(
         sender="noreply@lazycloudalbum.appspotmail.com",
         subject= "%s has been built!" %(title),
         to = email,
-        body = """blah
-                        """
+        #email template found at https://github.com/leemunroe/responsive-html-email-template
+        body = """
+        """ 
          )
