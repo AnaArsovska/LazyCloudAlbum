@@ -14,7 +14,10 @@ from google.appengine.ext import vendor
 vendor.add('lib')
 import cloudstorage
 
-UPLOAD_BASE_URL = "https://www.googleapis.com/upload/storage/v1/b/lazy_cloud_album_test/o?uploadType=media&name="
+BUCKET_NAME = "lazy_cloud_album_test"
+UPLOAD_BASE_URL_CS = "https://www.googleapis.com/upload/storage/v1/b/" + BUCKET_NAME + "/o?uploadType=media&name="
+DELETE_BASE_URL_CS = "https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/"
+GET_BASE_URL_CS = "https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/"
 
 def getContext(page):
     """ Gathers necessary information to populate pages
@@ -116,19 +119,19 @@ def clear_album_data(album):
         cloudstorage_filename = get_photo_filename_by_key(album.key.parent().get(), album.key.urlsafe(), image_key)
         cloudstorage_filename = cloudstorage_filename.replace("/","%2f")
 
-        storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + cloudstorage_filename,
+        storage_api.do_request(DELETE_BASE_URL_CS + cloudstorage_filename,
                                'DELETE')
 
         cloudstorage_filename = get_html_filename(album.key.parent().get(), album.key.urlsafe())
         cloudstorage_filename = cloudstorage_filename.replace("/","%2f")
-        storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + cloudstorage_filename,
+        storage_api.do_request(DELETE_BASE_URL_CS + cloudstorage_filename,
                                'DELETE')
 
 def get_html_from_cloud_storage(account, album_key):
     storage_api = cloudstorage.storage_api._get_storage_api(None)
     file_name = get_html_filename(account, album_key)
     file_name = file_name.replace("/", "%2f")
-    (status, headers, content) = storage_api.do_request("https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/" + file_name + "?alt=media",'GET')
+    (status, headers, content) = storage_api.do_request(GET_BASE_URL_CS + file_name + "?alt=media",'GET')
 
     # Returns (success, response)
     if status == 200:
@@ -140,8 +143,12 @@ def upload_text_file_to_cloudstorage(filename, contents):
     storage_api = cloudstorage.storage_api._get_storage_api(None)
     headers =  {"Content-Type": "text/plain"}
     logging.info("Saving text file with filename:" + filename)
-    storage_api.do_request(UPLOAD_BASE_URL + filename, 'POST', headers, contents)
-    logging.info("Wrote textfile with filename: " + filename)
+    (status, headers, content) = storage_api.do_request(UPLOAD_BASE_URL_CS + filename, 'POST', headers, contents)
+    if status == 200:
+      logging.info("Uploading html with filename " + filename + " succeeded")
+    else:
+      logging.error("Uploading html with filename " + filename + " failed with status code " + status + ". Headers: " + headers)
+
 
 
 def upload_album_images_to_cloud_storage(account, album, images):
@@ -151,7 +158,11 @@ def upload_album_images_to_cloud_storage(account, album, images):
 
         image_name = get_photo_filename(account, album.key.urlsafe(), image)
         headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
-        storage_api.do_request(UPLOAD_BASE_URL + image_name, 'POST', headers, data)
+        (status, headers, content) = storage_api.do_request(UPLOAD_BASE_URL_CS + image_name, 'POST', headers, data)
+        if status == 200:
+          logging.info("Uploading image with filename " + image_name + " succeeded")
+        else:
+          logging.error("Uploading image with filename " + image_name + " failed with status code " + status + " Headers: " + headers)
 
 
 def generate_dummy_html(image_keys):
