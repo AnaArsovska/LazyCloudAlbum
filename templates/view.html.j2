@@ -1,7 +1,7 @@
 {% extends 'base.html.j2' %}
 
 {% block content %}
-{% if album.key.parent().get().user_id == user.user_id() %}
+{% if user and album.key.parent().get().user_id == user.user_id() %}
 <form class = "edit" action="/edit/{{album.key.urlsafe()}}" method="post">
    <input name="title" id="title" type="text" class="edit"
    value={{album.title}}>
