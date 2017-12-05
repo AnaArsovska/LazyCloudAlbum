@@ -6,12 +6,22 @@ import logging
 from google.appengine.api import images
 from google.appengine.ext import blobstore, ndb
 from google.appengine.ext.blobstore import BlobKey
+from PIL import Image
 
 class Construct(webapp2.RequestHandler):
     @ndb.transactional
     def post(self):
         album_key = self.request.get("album")
+        album = utils.get_album_by_key(album_key)
+        user = album.key.parent().get()
         logging.info(utils.get_album_by_key(album_key).title)
+        ratio = {}
+        for image_file in album.images:
+            img = Image.open(blobstore.BlobReader(image_file))
+            (w, h) = img.size
+            logging.info(h)
+            ratio[image_file] = float(h)/float(w)
+        logging.info(ratio)
         #utils.send_album_email("mrgnmcsmith@gmail.com", "Album")
 
 class Delete(webapp2.RequestHandler):

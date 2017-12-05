@@ -13,17 +13,6 @@ indexes:
 - kind: Album
   ancestor: yes
   properties:
-  - name: creation_date
-
-- kind: Album
-  ancestor: yes
-  properties:
-  - name: creation_date
-    direction: desc
-
-- kind: Album
-  ancestor: yes
-  properties:
   - name: hidden
   - name: creation_date
     direction: desc

@@ -6,3 +6,7 @@ handlers:
 - url: /.*
   script: construction.application
   login: admin
+
+libraries:
+- name: PIL
+  version: latest
