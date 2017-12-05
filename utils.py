@@ -182,9 +182,9 @@ def generate_dummy_html(account, album_key, image_keys):
       
     rgb_sum = sum(colors[3])
     if rgb_sum > (128 * 3):
-      border = black
+      border = "black"
     else:
-      border = white
+      border = "white"
     color = str( (colors[3][0], colors [3][1], colors[3][2]))
 
     # class container black or container white
