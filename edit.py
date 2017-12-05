@@ -53,10 +53,6 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
 
         utils.upload_album_images_to_cloud_storage(account, album, self.get_uploads())
 
-        html = utils.generate_dummy_html(album.images)
-        filename = utils.get_html_filename(account, album.key.urlsafe())
-        utils.upload_text_file_to_cloudstorage(filename, html)
-
         task = taskqueue.add(
            url='/construction',
            params={'album': album.key.urlsafe()},
