@@ -13,6 +13,7 @@
 
 
 <button id = "delete" formaction="/edit/delete/{{album.key.urlsafe()}}" > <span> Delete <i class="fa fa-trash-o" aria-hidden="true"></i> </span></button>
+<button id = 'GeneratePDF'> PDF </button>
 
 <div class="fb-share-button"
     data-href="/view/{{album.key.urlsafe()}}"
@@ -26,7 +27,9 @@
 <a id= "sec2" href="#" onclick="return xepOnline.Formatter.Format('album',{render:'download', filename:'Your Lazy Album'});">
    PDF
 </a>
+
 <div class = "arrow left"><i class="fa fa-chevron-left"></i> </div>
+
 <div id = "album">
    {{saved_html}}
 </div>
@@ -100,6 +103,20 @@ $("#delete").click( function(){
 $(function(ready){
    updateAlbum(false);
 });
+
+$("#GeneratePDF").click( function(){
+    var pageID = [];
+    $(".page").each( function(){
+        pageID.push($(this).attr('id'));
+                    });
+    printAlbum(pageID);
+});
+
+function printAlbum(param0){
+    return xepOnline.Formatter.Format(param0,{render:'download', filename:'Your Lazy Album'});
+}
+
+
 </script>
 
 
