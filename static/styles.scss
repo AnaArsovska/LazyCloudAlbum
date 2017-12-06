@@ -600,6 +600,10 @@ input[type="file"]{
    font-size: 75%;
 }
 
+.disabled{
+   opacity: 0;
+}
+
 .sticker:after {
    content: "";
    position: absolute;
@@ -612,6 +616,26 @@ input[type="file"]{
    bottom: 3%;
 }
 
-.Eiffel:after {
+.eiffel:after {
    background-image: url('/static/stickers/e_tower.png');
+}
+
+.dog:after, .cat:after {
+   background-image: url('/static/stickers/paw_print.png');
+}
+
+.easter:after {
+   background-image: url('/static/stickers/easter.png');
+}
+
+.taj:after {
+   background-image: url('/static/stickers/taj.png');
+}
+
+.liberty:after {
+   background-image: url('/static/stickers/liberty.png');
+}
+
+.golden:after {
+   background-image: url('/static/stickers/golden_gate.png');
 }

@@ -206,6 +206,7 @@ def generate_html(album_key, pages, ratios):
   html = ""
   image_keys = album_key.get().images
   letters = ["a", "b", "c"]
+  page_num = 0
   for page in pages:
     page_imgs = page[1:]
 
@@ -228,7 +229,7 @@ def generate_html(album_key, pages, ratios):
 
     r = map(lambda x: ratios[x], page_imgs)
     if page[0] == "3a": #ttw
-        columns = "%dfr %dfr" % ( int(100*(1/r[0])/((1/r[0])+(1/r[1])) ), int(100*(1/r[1])/((1/r[0])+(1/r[1]))) )
+        columns = "%dfr %dfr" % ( int(100*(1/r[0] + .5 )/((1/r[0])+(1/r[1]) + 1 ) ), int(100*(1/r[1] + .5)/((1/r[0])+(1/r[1]) + 1) ) )
         rows = "%dfr %dfr" % ( 60, 40 )
 
         style = """
@@ -238,7 +239,7 @@ def generate_html(album_key, pages, ratios):
             """ % (rows, columns)
 
     elif page[0] == "3b": #tww
-        rows = "%dfr %dfr" % ( int(100*r[1]/(r[1]+r[2])) , int(100*r[2]/(r[1]+r[2])) )
+        rows = "%dfr %dfr" % ( int(100*(r[1]+ .5)/(r[1]+r[2] + 1)) , int(100*(r[2] + .5) /(r[1]+r[2] + 1)) )
         columns = "%dfr %dfr" % ( 40, 60 )
         style = """
             grid-template-rows: %s;
@@ -271,13 +272,15 @@ def generate_html(album_key, pages, ratios):
             """
     style += "background-color: rgb%s;" % (str(tuple(palette[3])))
 
-    html += """<div class='page'>
+    page_id = "id%d" % page_num
+    page_num += 1
+    html += """<div class='page' id='%s'>
                     <div class='album_square'>
                         <div class='container %s' style='%s'>
                             %s
                         </div>
                     </div>
-                </div>""" % (div_class, style, img_tags)
+                </div>""" % (page_id, div_class, style, img_tags)
 
   logging.info("Generated html: " + html)
 
