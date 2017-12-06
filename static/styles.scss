@@ -600,7 +600,10 @@ input[type="file"]{
    font-size: 75%;
 }
 
-.disabled{
+.disabled {
+   opacity: 0;
+}
+.disabled:hover, .disabled:active {
    opacity: 0;
 }
 
