@@ -9,6 +9,7 @@ from google.appengine.ext.blobstore import BlobKey
 import base64
 import logging
 import yaml
+import random
 
 from google.appengine.ext import vendor
 vendor.add('lib')
@@ -188,64 +189,71 @@ def generate_dummy_html(account, album_key, image_keys):
       border = "white"
     color = str( (colors[3][0], colors [3][1], colors[3][2]))
 
-    # class container black or container white
-    html += """<div class='page'><div class='album_square'><div class='container %s' style='background-color: rgb%s'>%s Stickers: %s</div></div></div>""" % (border, color, img_tags, str(stickers))
+    if stickers:
+      random_sticker = random.choice(stickers)
+    else:
+      random_sticker = ""
+    logging.info("Random sticker chosen: " + random_sticker)
+    html += """<div class='page'><div class='album_square'>
+               <div class='container %s %s' style='background-color: rgb%s'>
+                 %s
+               </div></div></div>""" % (border, random_sticker, color, img_tags)
 
   return html
 
-def vision_api_web_detection(info):
-    """This is the minimal code to accomplish a web detect request to the google vision api
-        You don't need 56 MiB of python client code installing 'google-cloud-vision' to accomplish
-        that task on google app engine, which does not even work.
-        .. TODO:: you should have secured your api key before you deploy this code snippet.
-        Please take a look at https://support.google.com/cloud/answer/6310037?hl=en
-        :param uri: the complete uri to compare against the web
-        :type uri: str
-        :return: the result dictionary
-        :rtype: dict
-        """
+# def vision_api_web_detection(info):
+#     """This is the minimal code to accomplish a web detect request to the google vision api
+#         You don't need 56 MiB of python client code installing 'google-cloud-vision' to accomplish
+#         that task on google app engine, which does not even work.
+#         .. TODO:: you should have secured your api key before you deploy this code snippet.
+#         Please take a look at https://support.google.com/cloud/answer/6310037?hl=en
+#         :param uri: the complete uri to compare against the web
+#         :type uri: str
+#         :return: the result dictionary
+#         :rtype: dict
+#         """
 
-    data = blobstore.BlobReader(info.key()).read()
-    image_str = base64.b64encode(data)
-    # im = Image.open(BytesIO(data))
-    # quantize_js(im)
+#     data = blobstore.BlobReader(info.key()).read()
+#     image_str = base64.b64encode(data)
+#     # im = Image.open(BytesIO(data))
+#     # quantize_js(im)
 
-    with open("config.yaml", 'r') as stream:
-        try:
-            config = yaml.load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
+#     with open("config.yaml", 'r') as stream:
+#         try:
+#             config = yaml.load(stream)
+#         except yaml.YAMLError as exc:
+#             print(exc)
 
-    payload = {
-      "requests": [
-                 {
-                 "image": {
-                 "content": image_str
-                 },
-                 "features": [
-                              {
-                              "type": "LABEL_DETECTION",
-                              }
-                              ]
-                 }
-                 ]
-        }
+#     payload = {
+#       "requests": [
+#                  {
+#                  "image": {
+#                  "content": image_str
+#                  },
+#                  "features": [
+#                               {
+#                               "type": "LABEL_DETECTION",
+#                               }
+#                               ]
+#                  }
+#                  ]
+#         }
 
-    response = fetch(
-                     "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
-                     method=POST,
-                     payload=dumps(payload),
-                     headers={"Content-Type": "application/json"}
-                     )
-    result = loads(response.content)
-    #main_colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors'][0:3]
+#     response = fetch(
+#                      "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
+#                      method=POST,
+#                      payload=dumps(payload),
+#                      headers={"Content-Type": "application/json"}
+#                      )
+#     result = loads(response.content)
+#     #main_colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors'][0:3]
 
-    # Returns (success, response). Response is empty if an error occurred
-    try:
-        label = result[u'responses'][0][u'labelAnnotations'][0][u'description']
-        return (True, label)
-    except KeyError:
-        return (False, "")
+#     # Returns (success, response). Response is empty if an error occurred
+#     try:
+#         label = result[u'responses'][0][u'labelAnnotations'][0][u'description']
+#         return (True, label)
+#     except KeyError:
+#         return (False, "")
 
 def get_details_from_cloud_vision(image_keys):
     COMMON_LANDMARKS = ["eiffel tower", "statue of liberty", "taj mahal", "golden gate bridge"]
@@ -288,8 +296,8 @@ def get_details_from_cloud_vision(image_keys):
                      headers={"Content-Type": "application/json"}
                      )
     results = loads(response.content)
-    logging.info("Result from vision api:")
-    logging.info(results)
+    # logging.info("Result from vision api:")
+    # logging.info(results)
 
     rgb_colors = []
     reds = []
@@ -300,7 +308,8 @@ def get_details_from_cloud_vision(image_keys):
       colors = results[u'responses'][i][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
       #main_color = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0]
       if len(image_keys) < 3:
-        main_colors = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:2]
+        num_colors = 2 if len(image_keys) == 2 else 3
+        main_colors = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:num_colors]
         for main_color in main_colors:
           info = main_color[u'color']
           rgb = [info[u'red'], info[u'green'], info[u'blue']]
@@ -320,16 +329,12 @@ def get_details_from_cloud_vision(image_keys):
 
       logging.info("Length of stickers so far: " + str(len(stickers)))
 
-      #if len(stickers) > 0:
-      #  break
-
       labels = results[u'responses'][0][u'labelAnnotations']
       labels = sorted(labels, key = lambda annotation : annotation[u'score'] , reverse = True)[0:5]
       for label in labels:
         label = label[u'description']
         if label in COMMON_LABELS:
           stickers.append(label)
-          #break
 
       try:
         landmark = results[u'responses'][i][u'landmarkAnnotations']
@@ -337,12 +342,8 @@ def get_details_from_cloud_vision(image_keys):
         landmark_name = landmark[u'description']
         if landmark_name.lower() in COMMON_LANDMARKS:
           stickers.append(landmark_name)
-          # Only one landmark per page
-          #break
       except KeyError:
         pass
-
-
 
     logging.info("Stickers: " + str(stickers))
 
@@ -358,83 +359,100 @@ def get_details_from_cloud_vision(image_keys):
                          headers={"Content-Type": "application/json"}
                          )
     palette = loads(palette_response.content)[u'result']
+
+    # color at index 4 will be the background color of the page. This check here is to
+    # catch the case where a grayscale image gets a super bright background
+    is_grayscale = []
+    for i in xrange(0, len(reds)):
+      if abs(reds[i] - greens[i]) <= 25 and abs(reds[i] - blues[i]) <= 25 and abs(greens[i] - blues[i]) <= 25:
+        logging.info("Determined that color with rgb %d, %d, %d is grayscale" % (reds[i], greens[i], blues[i]))
+        is_grayscale.append(True)
+      else:
+        logging.info("Determined that color with rgb %d, %d, %d is NOT grayscale" % (reds[i], greens[i], blues[i]))
+        is_grayscale.append(False)
+
+    [red, green, blue] = palette[3]
+    if not (abs(red - green) <= 25 and abs(red - blue) <= 25 and abs(green - blue) <= 25):
+      logging.info("Determined that the background color (%d, %d, %d) was too vibrant, resorting to average (%d, %d, %d)" % (palette[3][0], palette[3][1], palette[3][2], average_rgb[0], average_rgb[1], average_rgb[2]))
+      palette[3] = average_rgb
+
     return (palette, stickers)
 
 
-def vision_api_web_detection_colors(info):
-    """ Test for vision api
+# def vision_api_web_detection_colors(info):
+#     """ Test for vision api
 
-        Args:
-        info: whatever the hell upload is
-        Returns:
-        First label
+#         Args:
+#         info: whatever the hell upload is
+#         Returns:
+#         First label
 
-        """
+#         """
 
-    data = blobstore.BlobReader(info).read()
-    string = base64.b64encode(data)
+#     data = blobstore.BlobReader(info).read()
+#     string = base64.b64encode(data)
 
-    with open("config.yaml", 'r') as stream:
-        config = yaml.load(stream)
+#     with open("config.yaml", 'r') as stream:
+#         config = yaml.load(stream)
 
-    #file_name = file_name.replace("/", "%2f")
-    #logging.info("Uri: " + ("gs://%s/%s" % (BUCKET_NAME, file_name)))
-    payload = {
-        "requests": [
-                     {
-                     "image": {
-                      "content": string
-                      #"source": { "imageUri": "gs://%s/%s" % (BUCKET_NAME, file_name) }
-                     },
-                     "features": [
-                                  {
-                                  "type": "IMAGE_PROPERTIES",
-                                  }
-                                ]
-                     },
-                     {
-                     "image": {
-                      "content": string
-                      #"source": { "imageUri": "gs://%s/%s" % (BUCKET_NAME, file_name) }
-                     },
-                     "features": [
-                                  {
-                                  "type": "IMAGE_PROPERTIES",
-                                  }
-                                ]
-                     }
-                    ]
-    }
+#     #file_name = file_name.replace("/", "%2f")
+#     #logging.info("Uri: " + ("gs://%s/%s" % (BUCKET_NAME, file_name)))
+#     payload = {
+#         "requests": [
+#                      {
+#                      "image": {
+#                       "content": string
+#                       #"source": { "imageUri": "gs://%s/%s" % (BUCKET_NAME, file_name) }
+#                      },
+#                      "features": [
+#                                   {
+#                                   "type": "IMAGE_PROPERTIES",
+#                                   }
+#                                 ]
+#                      },
+#                      {
+#                      "image": {
+#                       "content": string
+#                       #"source": { "imageUri": "gs://%s/%s" % (BUCKET_NAME, file_name) }
+#                      },
+#                      "features": [
+#                                   {
+#                                   "type": "IMAGE_PROPERTIES",
+#                                   }
+#                                 ]
+#                      }
+#                     ]
+#     }
 
-    response = fetch(
-                     "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
-                     method=POST,
-                     payload=dumps(payload),
-                     headers={"Content-Type": "application/json"}
-                     )
-    result = loads(response.content)
-    logging.info("Result from vision api:")
-    logging.info(result)
-    # colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
-    # main_colors = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:5]
-    # rgb_colors = []
-    # for color in main_colors:
-    #     info = color[u'color']
-    #     rgb = [info[u'red'], info[u'green'], info[u'blue']]
-    #     rgb_colors.append(rgb)
+#     response = fetch(
+#                      "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
+#                      method=POST,
+#                      payload=dumps(payload),
+#                      headers={"Content-Type": "application/json"}
+#                      )
+#     result = loads(response.content)
+#     logging.info("Result from vision api:")
+#     logging.info(result)
+#     # colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
+#     # main_colors = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:5]
+#     # rgb_colors = []
+#     # for color in main_colors:
+#     #     info = color[u'color']
+#     #     rgb = [info[u'red'], info[u'green'], info[u'blue']]
+#     #     rgb_colors.append(rgb)
 
-    # palette_response = fetch(
-    #                      'http://colormind.io/api/',
-    #                      method=POST,
-    #                      payload= '{"input": %s , "model":"default" }' % (str(rgb_colors)),
-    #                      headers={"Content-Type": "application/json"}
-    #                      )
-    # palette = loads(palette_response.content)[u'result']
+#     # palette_response = fetch(
+#     #                      'http://colormind.io/api/',
+#     #                      method=POST,
+#     #                      payload= '{"input": %s , "model":"default" }' % (str(rgb_colors)),
+#     #                      headers={"Content-Type": "application/json"}
+#     #                      )
+#     # palette = loads(palette_response.content)[u'result']
 
-    # logging.info("Got the palette: " + str(palette))
+#     # logging.info("Got the palette: " + str(palette))
 
-    #return palette #result[u'responses'][0][u'imagePropertiesAnnotation'][0][u'description']
-    return (0,0,0)
+#     #return palette #result[u'responses'][0][u'imagePropertiesAnnotation'][0][u'description']
+#     return (0,0,0)
 
 def send_album_email(name, email, album_key):
     logging.info("sending mail!")

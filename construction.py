@@ -18,7 +18,7 @@ class Construct(webapp2.RequestHandler):
         for image_file in album.images:
             img = Image.open(blobstore.BlobReader(image_file))
             (w, h) = img.size
-            logging.info(h)
+            # logging.info(h)
             ratio[image_file] = float(h)/float(w)
         logging.info(ratio)
         logging.info(album.title)
