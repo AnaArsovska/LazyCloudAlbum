@@ -19,6 +19,7 @@ class Construct(webapp2.RequestHandler):
         for image_file in imgs:
             img = Image.open(blobstore.BlobReader(image_file))
             (w, h) = img.size
+<<<<<<< HEAD
             logging.info(img.size)
             p_ratio = float(h)/float(w)
             ratio[image_file] = p_ratio
@@ -58,6 +59,10 @@ class Construct(webapp2.RequestHandler):
             cursor += 1
         logging.info(pages)
         logging.info(shape)
+=======
+            # logging.info(h)
+            ratio[image_file] = float(h)/float(w)
+>>>>>>> 4da4996bc98102b2ddbe2bb2ad0e74cb491fe28d
         logging.info(ratio)
 
         account = album.key.parent().get()

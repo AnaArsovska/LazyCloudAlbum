@@ -9,6 +9,7 @@ from google.appengine.ext.blobstore import BlobKey
 import base64
 import logging
 import yaml
+import random
 
 from google.appengine.ext import vendor
 vendor.add('lib')
@@ -157,6 +158,10 @@ def upload_album_images_to_cloud_storage(account, album, images):
         data = blobstore.BlobReader(image.key()).read()
 
         image_name = get_photo_filename(account, album.key.urlsafe(), image)
+<<<<<<< HEAD
+=======
+        #headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
+>>>>>>> 4da4996bc98102b2ddbe2bb2ad0e74cb491fe28d
         headers =  {"Content-Type": "image/jpeg"}
         (status, headers, content) = storage_api.do_request(UPLOAD_BASE_URL_CS + image_name, 'POST', headers, data)
         if status != 200:
@@ -169,7 +174,7 @@ def generate_dummy_html(account, album_key, image_keys):
   for i in xrange(0, len(image_keys), IMG_PER_PAGE):
     page_imgs = image_keys[i:i+IMG_PER_PAGE]
     img_tags = ""
-    colors = get_dominant_colors(page_imgs)
+    (colors, stickers) = get_details_from_cloud_vision(page_imgs)
 
     i = 0
     for image in page_imgs:
@@ -187,10 +192,16 @@ def generate_dummy_html(account, album_key, image_keys):
       border = "white"
     color = str( (colors[3][0], colors [3][1], colors[3][2]))
 
-    # class container black or container white
-    html += """<div class='page'><div class='album_square'><div class='container %s' style='background-color: rgb%s'>%s</div></div></div>""" % (border, color, img_tags)
+    if stickers:
+      random_sticker = random.choice(stickers)
+    else:
+      random_sticker = ""
+    logging.info("Random sticker chosen: " + random_sticker)
+    html += """<div class='page'><div class='album_square'>
+               <div class='container %s %s' style='background-color: rgb%s'>
+                 %s
+               </div></div></div>""" % (border, random_sticker, color, img_tags)
 
-  logging.info("Generated html: " + html)
   return html
 
 
@@ -265,64 +276,9 @@ def generate_html(album_key, pages, ratios):
 
   return html
 
-
-def vision_api_web_detection(info):
-    """This is the minimal code to accomplish a web detect request to the google vision api
-        You don't need 56 MiB of python client code installing 'google-cloud-vision' to accomplish
-        that task on google app engine, which does not even work.
-        .. TODO:: you should have secured your api key before you deploy this code snippet.
-        Please take a look at https://support.google.com/cloud/answer/6310037?hl=en
-        :param uri: the complete uri to compare against the web
-        :type uri: str
-        :return: the result dictionary
-        :rtype: dict
-        """
-
-    data = blobstore.BlobReader(info.key()).read()
-    image_str = base64.b64encode(data)
-    # im = Image.open(BytesIO(data))
-    # quantize_js(im)
-
-    with open("config.yaml", 'r') as stream:
-        try:
-            config = yaml.load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
-
-    payload = {
-      "requests": [
-                 {
-                 "image": {
-                 "content": image_str
-                 },
-                 "features": [
-                              {
-                              "type": "LABEL_DETECTION",
-                              }
-                              ]
-                 }
-                 ]
-        }
-
-    response = fetch(
-                     "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
-                     method=POST,
-                     payload=dumps(payload),
-                     headers={"Content-Type": "application/json"}
-                     )
-    result = loads(response.content)
-    #main_colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors'][0:3]
-
-    # Returns (success, response). Response is empty if an error occurred
-    try:
-        label = result[u'responses'][0][u'labelAnnotations'][0][u'description']
-        return (True, label)
-    except KeyError:
-        return (False, "")
-
-def get_dominant_colors(image_keys):
-
-
+def get_details_from_cloud_vision(image_keys):
+    COMMON_LANDMARKS = ["eiffel tower", "statue of liberty", "taj mahal", "golden gate bridge"]
+    COMMON_LABELS = ["dog", "cat", "beach", "christmas", "valentine", "heart", "easter", "bunny", "bird"]
     with open("config.yaml", 'r') as stream:
         config = yaml.load(stream)
 
@@ -338,6 +294,15 @@ def get_dominant_colors(image_keys):
                      "features": [
                                   {
                                   "type": "IMAGE_PROPERTIES",
+                                  "maxResults":5
+                                  },
+                                  {
+                                  "type": "LANDMARK_DETECTION",
+                                  "maxResults":5
+                                  },
+                                  {
+                                  "type": "LABEL_DETECTION",
+                                  "maxResults":5
                                   }
                                 ]
                      })
@@ -352,27 +317,62 @@ def get_dominant_colors(image_keys):
                      headers={"Content-Type": "application/json"}
                      )
     results = loads(response.content)
-    logging.info("Result from vision api:")
-    logging.info(results)
+    # logging.info("Result from vision api:")
+    # logging.info(results)
 
     rgb_colors = []
     reds = []
     greens = []
     blues = []
+    stickers = []
+
     for i in xrange(0, len(image_keys)):
       colors = results[u'responses'][i][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
       #main_color = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0]
-      main_color = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0]
-      info = main_color[u'color']
-      rgb = [info[u'red'], info[u'green'], info[u'blue']]
-      reds.append(rgb[0])
-      greens.append(rgb[1])
-      blues.append(rgb[2])
+      if len(image_keys) < 3:
+        num_colors = 2 if len(image_keys) == 2 else 3
+        main_colors = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:num_colors]
+        for main_color in main_colors:
+          info = main_color[u'color']
+          rgb = [info[u'red'], info[u'green'], info[u'blue']]
+          reds.append(rgb[0])
+          greens.append(rgb[1])
+          blues.append(rgb[2])
+          rgb_colors.append(rgb)
+      else:
+        main_color = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0]
+        info = main_color[u'color']
+        rgb = [info[u'red'], info[u'green'], info[u'blue']]
+        reds.append(rgb[0])
+        greens.append(rgb[1])
+        blues.append(rgb[2])
 
-      rgb_colors.append(rgb)
+        rgb_colors.append(rgb)
+
+      logging.info("Length of stickers so far: " + str(len(stickers)))
+
+      labels = results[u'responses'][0][u'labelAnnotations']
+      labels = sorted(labels, key = lambda annotation : annotation[u'score'] , reverse = True)[0:5]
+      for label in labels:
+        label = label[u'description']
+        if label in COMMON_LABELS:
+          stickers.append(label)
+
+      try:
+        landmark = results[u'responses'][i][u'landmarkAnnotations']
+        landmark = sorted(landmark, key = lambda annotation : annotation[u'score'] , reverse = True)[0]
+        landmark_name = landmark[u'description']
+        if landmark_name.lower() in COMMON_LANDMARKS:
+          stickers.append(landmark_name)
+      except KeyError:
+        pass
+
+    logging.info("Stickers: " + str(stickers))
 
     average_rgb = [ sum(reds)/len(reds), sum(greens)/len(greens), sum(blues)/len(blues)]
     rgb_colors.append(average_rgb)
+
+    logging.info("Sending " + str(len(rgb_colors)) + " colors to colormind")
 
     palette_response = fetch(
                          'http://colormind.io/api/',
@@ -381,92 +381,38 @@ def get_dominant_colors(image_keys):
                          headers={"Content-Type": "application/json"}
                          )
     palette = loads(palette_response.content)[u'result']
-    return palette
 
+    # color at index 4 will be the background color of the page. This check here is to
+    # catch the case where a grayscale image gets a super bright background
+    is_grayscale = []
+    for i in xrange(0, len(reds)):
+      if abs(reds[i] - greens[i]) <= 25 and abs(reds[i] - blues[i]) <= 25 and abs(greens[i] - blues[i]) <= 25:
+        logging.info("Determined that color with rgb %d, %d, %d is grayscale" % (reds[i], greens[i], blues[i]))
+        is_grayscale.append(True)
+      else:
+        logging.info("Determined that color with rgb %d, %d, %d is NOT grayscale" % (reds[i], greens[i], blues[i]))
+        is_grayscale.append(False)
 
-def vision_api_web_detection_colors(info):
-    """ Test for vision api
+    [red, green, blue] = palette[3]
+    if not (abs(red - green) <= 25 and abs(red - blue) <= 25 and abs(green - blue) <= 25):
+      logging.info("Determined that the background color (%d, %d, %d) was too vibrant, resorting to average (%d, %d, %d)" % (palette[3][0], palette[3][1], palette[3][2], average_rgb[0], average_rgb[1], average_rgb[2]))
+      palette[3] = average_rgb
 
-        Args:
-        info: whatever the hell upload is
-        Returns:
-        First label
-
-        """
-
-    data = blobstore.BlobReader(info).read()
-    string = base64.b64encode(data)
-
-    with open("config.yaml", 'r') as stream:
-        config = yaml.load(stream)
-
-    #file_name = file_name.replace("/", "%2f")
-    #logging.info("Uri: " + ("gs://%s/%s" % (BUCKET_NAME, file_name)))
-    payload = {
-        "requests": [
-                     {
-                     "image": {
-                      "content": string
-                      #"source": { "imageUri": "gs://%s/%s" % (BUCKET_NAME, file_name) }
-                     },
-                     "features": [
-                                  {
-                                  "type": "IMAGE_PROPERTIES",
-                                  }
-                                ]
-                     },
-                     {
-                     "image": {
-                      "content": string
-                      #"source": { "imageUri": "gs://%s/%s" % (BUCKET_NAME, file_name) }
-                     },
-                     "features": [
-                                  {
-                                  "type": "IMAGE_PROPERTIES",
-                                  }
-                                ]
-                     }
-                    ]
-    }
-
-    response = fetch(
-                     "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
-                     method=POST,
-                     payload=dumps(payload),
-                     headers={"Content-Type": "application/json"}
-                     )
-    result = loads(response.content)
-    logging.info("Result from vision api:")
-    logging.info(result)
-    # colors = result[u'responses'][0][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
-    # main_colors = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:5]
-    # rgb_colors = []
-    # for color in main_colors:
-    #     info = color[u'color']
-    #     rgb = [info[u'red'], info[u'green'], info[u'blue']]
-    #     rgb_colors.append(rgb)
-
-    # palette_response = fetch(
-    #                      'http://colormind.io/api/',
-    #                      method=POST,
-    #                      payload= '{"input": %s , "model":"default" }' % (str(rgb_colors)),
-    #                      headers={"Content-Type": "application/json"}
-    #                      )
-    # palette = loads(palette_response.content)[u'result']
-
-    # logging.info("Got the palette: " + str(palette))
-
-    #return palette #result[u'responses'][0][u'imagePropertiesAnnotation'][0][u'description']
-    return (0,0,0)
+    return (palette, stickers)
 
 def send_album_email(name, email, album_key):
     logging.info("sending mail!")
     album = get_album_by_key(album_key)
+    title = album.title
+    url = "lazycloudalbum.appspot.com/create/%s" % (album_key)
     mail.send_mail(
         sender="noreply@lazycloudalbum.appspotmail.com",
         subject= "%s has been built!" %(title),
         to = email,
-        #email template found at https://github.com/leemunroe/responsive-html-email-template
         body = """
-        """
+        Hey %s,
+
+        We've finished putting together your '%s' album.
+        <a href = '%s'> Check it out! </a>
+        """ % (name, title, )
          )
