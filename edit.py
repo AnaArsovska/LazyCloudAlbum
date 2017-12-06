@@ -25,14 +25,19 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
         account = utils.get_account()
         album = models.Album( parent = account.key )
         album.public = album.public = True if self.request.get('public') else False #bool() not working
+
+        if self.get_uploads():
+            uploads = [x for x in self.get_uploads() if x.size < 4000000]
+
         if title :
             album.title = title
 
-        if self.get_uploads():
-            upload = self.get_uploads()[0]
-            thumbnail_blob_key = upload.key()
-            for upload in self.get_uploads():
+        if uploads:
+            thumbnail_blob_key = uploads[0].key()
+            for upload in uploads:
                 album.images.append(str(upload.key()))
+                logging.info( "my size is " + str( upload.size ) )
+            utils.upload_album_images_to_cloud_storage(account, album, uploads)
         else:
             thumbnail_blob_key = None
 
@@ -50,12 +55,6 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
             album.thumbnail_url = ""
 
         album.put()
-
-        utils.upload_album_images_to_cloud_storage(account, album, self.get_uploads())
-
-        html = utils.generate_dummy_html(album.images)
-        filename = utils.get_html_filename(account, album.key.urlsafe())
-        utils.upload_text_file_to_cloudstorage(filename, html)
 
         task = taskqueue.add(
            url='/construction',

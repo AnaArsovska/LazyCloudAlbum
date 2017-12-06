@@ -12,10 +12,13 @@ function sendForm(form) {
    $("input[type='file']").each( function(index){
       var use_img = $(this).parent().data("use_image");
       var F = this.files;
-      if (F && F[0]) {
+      console.log(F);
+      console.log(use_img);
+      if (F) {
          for (var i = 0; i < F.length; i++) {
             if (use_img[i]) {
                formData.append("uploads", F[i]);
+
             }
          }
       }
@@ -67,8 +70,11 @@ $(function(ready){
       console.log("reading" +file.name)
       var reader = new FileReader();
       var image  = new Image();
-
       reader.readAsDataURL(file);
+      if (file.size > 4000000){
+         return 0;
+      };
+
       reader.onload = function(_file) {
          image.src = _file.target.result; // url.createObjectURL(file);
          image.onload = function() {
@@ -83,9 +89,11 @@ $(function(ready){
 
       $(location).before(`<div class="img_remove"></div>`); //Creates div to house image, ensures order
       var new_location = $(location).prev(); //selects div to place image
+      return 1;
    }
 
    addInput(); //Creates first input button
+
 
    $("#img_inputs").on("change", ".img_add", function (e) {
       //waits for file input to be selected then previews images
@@ -94,11 +102,10 @@ $(function(ready){
       if (F && F[0]) {
          var use_image = [];
          for (var i = 0; i < F.length; i++) {
-            readImage(this, F[i], i);
-            use_image[i] = 1;
+            use_image[i] = readImage(this, F[i], i);
          }
-         $(this).parent().data("use_image", use_image)
-      }
+         $(this).parent().data("use_image", use_image);
+      };
       $(this).hide();
       addInput();
 
@@ -138,5 +145,6 @@ $(function(ready){
 </div>
 
 <button class="button" id="build_button" type="submit" onclick="return sendForm(this.form);" value="Build" form="build_form"> <span> Build <i class="fa fa-scissors" aria-hidden="true"></i> </span></button>
+<span class="message note"> Images above 4MB will be ignored </span>
 
 {% endblock %}
