@@ -157,7 +157,7 @@ def upload_album_images_to_cloud_storage(account, album, images):
         data = blobstore.BlobReader(image.key()).read()
 
         image_name = get_photo_filename(account, album.key.urlsafe(), image)
-        headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
+        headers =  {"Content-Type": "image/jpeg"}
         (status, headers, content) = storage_api.do_request(UPLOAD_BASE_URL_CS + image_name, 'POST', headers, data)
         if status != 200:
           logging.error("Uploading image with filename " + image_name + " failed with status code " + status + " Headers: " + headers)
@@ -192,6 +192,79 @@ def generate_dummy_html(account, album_key, image_keys):
 
   logging.info("Generated html: " + html)
   return html
+
+
+
+def generate_html(album_key, pages, ratios):
+  html = ""
+  image_keys = album_key.get().images
+  letters = ["a", "b", "c"]
+  for page in pages:
+    page_imgs = page[1:]
+    img_tags = ""
+
+    for image in page_imgs:
+      image_url = images.get_serving_url( image, size=300)
+      img_tags += """<div class = 'resizer' style='grid-area:%s;' > <div class="border"> <img src='%s'/></div></div>""" % (letters[page_imgs.index(image)], image_url)
+
+    style = ""
+
+    r = map(lambda x: ratios[x], page_imgs)
+    logging.info(r)
+    if page[0] == "3a": #ttw
+        columns = "%d%% %d%%" % ( int(100*(1/r[0])/((1/r[0])+(1/r[1])) ), int(100*(1/r[1])/((1/r[0])+(1/r[1]))) )
+        rows = "%d%% %d%%" % ( 60, 40 )
+
+        style = """
+            grid-template-rows: %s;
+            grid-template-columns: %s;
+            grid-template-areas: "a b" "c c";
+            """ % (rows, columns)
+
+    elif page[0] == "3b": #tww
+        rows = "%d%% %d%%" % ( int(100*r[1]/(r[1]+r[2])) , int(100*r[2]/(r[1]+r[2])) )
+        columns = "%d%% %d%%" % ( 40, 60 )
+        style = """
+            grid-template-rows: %s;
+            grid-template-columns: %s;
+            grid-template-areas: "a b" "a c";
+            """ % (rows, columns)
+    elif page[0] == "2a": #tt
+        columns = "%d%% %d%%" % ( int( 100*(1/r[0] +.5)/((1/r[0])+(1/r[1])+1) ), int(100*(1/r[1] + .5)/((1/r[0])+(1/r[1])+1)) )
+        style = """
+            grid-template-columns: %s;
+            grid-template-areas: "a b";
+            """ % (columns)
+    elif page[0] == "2b": #ww
+        rows = "%d%% %d%%" % ( int(100*(r[0]+.5)/(r[0]+r[1]+1)) , int(100*(r[1]+.5)/(r[0]+r[1]+1)) )
+        style = """
+            grid-template-rows: %s;
+            grid-template-areas: "a" "b";
+            """ % (rows)
+    else:
+        style = """
+           display: -webkit-box;
+           display: -ms-flexbox;
+           display: flex;
+           -webkit-box-pack: center;
+               -ms-flex-pack: center;
+                   justify-content: center;
+           -webkit-box-align: center;
+               -ms-flex-align: center;
+                   align-items: center;
+            """
+    html += """<div class='page'>
+                    <div class='album_square'>
+                        <div class='container %s' style='%s'>
+                            %s
+                        </div>
+                    </div>
+                </div>""" % (page[0], style, img_tags)
+
+  logging.info("Generated html: " + html)
+
+  return html
+
 
 def vision_api_web_detection(info):
     """This is the minimal code to accomplish a web detect request to the google vision api

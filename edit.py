@@ -36,7 +36,6 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
             thumbnail_blob_key = uploads[0].key()
             for upload in uploads:
                 album.images.append(str(upload.key()))
-                logging.info( "my size is " + str( upload.size ) )
             utils.upload_album_images_to_cloud_storage(account, album, uploads)
         else:
             thumbnail_blob_key = None
@@ -62,7 +61,6 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
            target = 'worker',
            transactional = True)
 
-        logging.info("I should redirect")
         #redirect moved to javascript, browser doesn't honor ajax redirects
 
 class ErrorPage(webapp2.RequestHandler):

@@ -528,23 +528,38 @@ input[type="file"]{
    height: 100%;
    background-color: blue;
    display: grid;
-   grid-template-areas: "a c" "b c";
-   grid-template-rows: 50% 50%;
-   grid-template-columns: 50% 50%;
-
-   img {
-      height: 90%;
-      margin: 5%;
-      padding: 2%;
-      background-color: palegreen;
-      border: black solid 3px;
-      -o-object-fit: contain;
-         object-fit: contain;
-      -webkit-box-sizing: border-box;
-              box-sizing: border-box;
-   }
 }
+.resizer{
+   padding: .5vw;
+   display: -webkit-box;
+   display: -ms-flexbox;
+   display: flex;
+   -webkit-box-pack: center;
+       -ms-flex-pack: center;
+           justify-content: center;
+   -webkit-box-align: center;
+       -ms-flex-align: center;
+           align-items: center;
 
+}
+.border{
+   padding: 1vw;
+   background-color: palegreen;
+   border: black solid .3vw;
+   max-width: 95%;
+   max-height: 95%;
+   -webkit-box-sizing: border-box;
+           box-sizing: border-box;
+
+  img {
+    max-height: 100%;
+    max-width: 100%;
+    -o-object-fit: contain;
+        object-fit: contain;
+    -webkit-box-shadow: $shadow;
+             box-shadow: $shadow;
+  }
+}
 #browser_warning {
    -webkit-box-ordinal-group:3;
        -ms-flex-order:2;
