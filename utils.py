@@ -209,21 +209,27 @@ def generate_html(album_key, pages, ratios):
   for page in pages:
     page_imgs = page[1:]
 
-    get_details_from_cloud_vision(page_imgs)
+    (palette, stickers) = get_details_from_cloud_vision(page_imgs)
+
+    div_class = page[0]
+    if stickers:
+        div_class += " sticker %s" % stickers[0]
+
 
     img_tags = ""
 
     for image in page_imgs:
-      image_url = images.get_serving_url( image, size=300)
-      logging.info(image_url)
-      img_tags += """<div class = 'resizer' style='grid-area:%s;' > <img  src='%s'/> </div>""" % (letters[page_imgs.index(image)], image_url)
+        i = page_imgs.index(image)
+        image_url = images.get_serving_url( image, size=300)
+        logging.info(image_url)
+        img_tags += """<div class='resizer' style='grid-area:%s;'> <img src='%s' style ='background-color: rgb%s'/> </div>""" % (letters[i], image_url, str(tuple(palette[i])))
 
     style = ""
 
     r = map(lambda x: ratios[x], page_imgs)
     if page[0] == "3a": #ttw
-        columns = "%d%% %d%%" % ( int(100*(1/r[0])/((1/r[0])+(1/r[1])) ), int(100*(1/r[1])/((1/r[0])+(1/r[1]))) )
-        rows = "%d%% %d%%" % ( 60, 40 )
+        columns = "%dfr %dfr" % ( int(100*(1/r[0])/((1/r[0])+(1/r[1])) ), int(100*(1/r[1])/((1/r[0])+(1/r[1]))) )
+        rows = "%dfr %dfr" % ( 60, 40 )
 
         style = """
             grid-template-rows: %s;
@@ -232,21 +238,21 @@ def generate_html(album_key, pages, ratios):
             """ % (rows, columns)
 
     elif page[0] == "3b": #tww
-        rows = "%d%% %d%%" % ( int(100*r[1]/(r[1]+r[2])) , int(100*r[2]/(r[1]+r[2])) )
-        columns = "%d%% %d%%" % ( 40, 60 )
+        rows = "%dfr %dfr" % ( int(100*r[1]/(r[1]+r[2])) , int(100*r[2]/(r[1]+r[2])) )
+        columns = "%dfr %dfr" % ( 40, 60 )
         style = """
             grid-template-rows: %s;
             grid-template-columns: %s;
             grid-template-areas: "a b" "a c";
             """ % (rows, columns)
     elif page[0] == "2a": #tt
-        columns = "%d%% %d%%" % ( int( 100*(1/r[0] +.5)/((1/r[0])+(1/r[1])+1) ), int(100*(1/r[1] + .5)/((1/r[0])+(1/r[1])+1)) )
+        columns = "%dfr %dfr" % ( int( 100*(1/r[0] +.5)/((1/r[0])+(1/r[1])+1) ), int(100*(1/r[1] + .5)/((1/r[0])+(1/r[1])+1)) )
         style = """
             grid-template-columns: %s;
             grid-template-areas: "a b";
             """ % (columns)
     elif page[0] == "2b": #ww
-        rows = "%d%% %d%%" % ( int(100*(r[0]+.5)/(r[0]+r[1]+1)) , int(100*(r[1]+.5)/(r[0]+r[1]+1)) )
+        rows = "%dfr %dfr" % ( int(100*(r[0]+.5)/(r[0]+r[1]+1)) , int(100*(r[1]+.5)/(r[0]+r[1]+1)) )
         style = """
             grid-template-rows: %s;
             grid-template-areas: "a" "b";
@@ -263,13 +269,15 @@ def generate_html(album_key, pages, ratios):
                -ms-flex-align: center;
                    align-items: center;
             """
+    style += "background-color: rgb%s;" % (str(tuple(palette[3])))
+
     html += """<div class='page'>
                     <div class='album_square'>
                         <div class='container %s' style='%s'>
                             %s
                         </div>
                     </div>
-                </div>""" % (page[0], style, img_tags)
+                </div>""" % (div_class, style, img_tags)
 
   logging.info("Generated html: " + html)
 

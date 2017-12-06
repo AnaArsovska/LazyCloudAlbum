@@ -7,7 +7,7 @@ class Account(ndb.Model):
 class Album(ndb.Model):
     title = ndb.StringProperty(default="Untitled Album")
     creation_date = ndb.DateTimeProperty(auto_now_add=True)
-    html = ndb.StringProperty()
+    ready = ndb.BooleanProperty(default = False)
     thumbnail_url = ndb.StringProperty(default="")
     images = ndb.StringProperty(repeated=True)
     public = ndb.BooleanProperty(default = True)

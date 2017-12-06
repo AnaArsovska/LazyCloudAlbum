@@ -9,11 +9,12 @@
          </a>
       </li>
       {% for album in albums%}
-         <li>
-            <a href= "/view/{{album.key.urlsafe()}}">
-               <div class = "thumbnail" {% if album.thumbnail_url %}
-                  style="background-image:url({{album.thumbnail_url}}); background-size: cover;"
-               {% endif %}>
+         <li {%if not album.ready %} class="not_ready" {% endif %}>
+            <a {%if album.ready%} href="/view/{{album.key.urlsafe()}}" {% endif %}>
+               <div class = "thumbnail"
+                  {% if album.ready %}
+                     style="background-image:url({{album.thumbnail_url}}); background-size: cover;"
+                  {% endif %}>
 
                </div>
                <div class = "album_info">

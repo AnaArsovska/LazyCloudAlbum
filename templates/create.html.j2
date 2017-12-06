@@ -51,7 +51,7 @@ function sendForm(form) {
                            </br>
                            Uploading Pictures </h2>
                            This may take a moment`);
-   $(".message:not(.warning)").hide().delay(600).fadeIn("slow");
+   $(".message:not(.warning):not(.note)").hide().delay(600).fadeIn("slow");
    console.log(formData.get("uploads"));
    return false; // Prevent page from submitting.
 }

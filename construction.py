@@ -57,10 +57,11 @@ class Construct(webapp2.RequestHandler):
             cursor += 1
 
         account = album.key.parent().get()
-        utils.get_details_from_cloud_vision(imgs)
         html = utils.generate_html(album.key, pages, ratio)
         filename = utils.get_html_filename(account, album.key.urlsafe())
         utils.upload_text_file_to_cloudstorage(filename, html)
+        album.ready = True
+        album.put()
         #utils.send_album_email("mrgnmcsmith@gmail.com", "Album")
 
 class Delete(webapp2.RequestHandler):
