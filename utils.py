@@ -157,7 +157,8 @@ def upload_album_images_to_cloud_storage(account, album, images):
         data = blobstore.BlobReader(image.key()).read()
 
         image_name = get_photo_filename(account, album.key.urlsafe(), image)
-        headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
+        #headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
+        headers =  {"Content-Type": "image/jpeg"}
         (status, headers, content) = storage_api.do_request(UPLOAD_BASE_URL_CS + image_name, 'POST', headers, data)
         if status != 200:
           logging.error("Uploading image with filename " + image_name + " failed with status code " + status + " Headers: " + headers)
@@ -169,7 +170,7 @@ def generate_dummy_html(account, album_key, image_keys):
   for i in xrange(0, len(image_keys), IMG_PER_PAGE):
     page_imgs = image_keys[i:i+IMG_PER_PAGE]
     img_tags = ""
-    colors = get_dominant_colors(page_imgs)
+    (colors, stickers) = get_details_from_cloud_vision(page_imgs)
 
     i = 0
     for image in page_imgs:
@@ -188,9 +189,8 @@ def generate_dummy_html(account, album_key, image_keys):
     color = str( (colors[3][0], colors [3][1], colors[3][2]))
 
     # class container black or container white
-    html += """<div class='page'><div class='album_square'><div class='container %s' style='background-color: rgb%s'>%s</div></div></div>""" % (border, color, img_tags)
+    html += """<div class='page'><div class='album_square'><div class='container %s' style='background-color: rgb%s'>%s Stickers: %s</div></div></div>""" % (border, color, img_tags, str(stickers))
 
-  logging.info("Generated html: " + html)
   return html
 
 def vision_api_web_detection(info):
@@ -247,9 +247,9 @@ def vision_api_web_detection(info):
     except KeyError:
         return (False, "")
 
-def get_dominant_colors(image_keys):
-
-
+def get_details_from_cloud_vision(image_keys):
+    COMMON_LANDMARKS = ["eiffel tower", "statue of liberty", "taj mahal", "golden gate bridge"]
+    COMMON_LABELS = ["dog", "cat", "beach", "christmas", "valentine", "heart", "easter", "bunny", "bird"]
     with open("config.yaml", 'r') as stream:
         config = yaml.load(stream)
 
@@ -265,6 +265,15 @@ def get_dominant_colors(image_keys):
                      "features": [
                                   {
                                   "type": "IMAGE_PROPERTIES",
+                                  "maxResults":5
+                                  },
+                                  {
+                                  "type": "LANDMARK_DETECTION",
+                                  "maxResults":5
+                                  },
+                                  {
+                                  "type": "LABEL_DETECTION",
+                                  "maxResults":5
                                   }
                                 ]
                      })
@@ -286,20 +295,61 @@ def get_dominant_colors(image_keys):
     reds = []
     greens = []
     blues = []
+    stickers = []
     for i in xrange(0, len(image_keys)):
       colors = results[u'responses'][i][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
       #main_color = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0]
-      main_color = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0]
-      info = main_color[u'color']
-      rgb = [info[u'red'], info[u'green'], info[u'blue']]
-      reds.append(rgb[0])
-      greens.append(rgb[1])
-      blues.append(rgb[2])
+      if len(image_keys) < 3:
+        main_colors = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:2]
+        for main_color in main_colors:
+          info = main_color[u'color']
+          rgb = [info[u'red'], info[u'green'], info[u'blue']]
+          reds.append(rgb[0])
+          greens.append(rgb[1])
+          blues.append(rgb[2])
+          rgb_colors.append(rgb)
+      else:
+        main_color = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0]
+        info = main_color[u'color']
+        rgb = [info[u'red'], info[u'green'], info[u'blue']]
+        reds.append(rgb[0])
+        greens.append(rgb[1])
+        blues.append(rgb[2])
 
-      rgb_colors.append(rgb)
+        rgb_colors.append(rgb)
+
+      logging.info("Length of stickers so far: " + str(len(stickers)))
+
+      #if len(stickers) > 0:
+      #  break
+
+      labels = results[u'responses'][0][u'labelAnnotations']
+      labels = sorted(labels, key = lambda annotation : annotation[u'score'] , reverse = True)[0:5]
+      for label in labels:
+        label = label[u'description']
+        if label in COMMON_LABELS:
+          stickers.append(label)
+          #break
+
+      try:
+        landmark = results[u'responses'][i][u'landmarkAnnotations']
+        landmark = sorted(landmark, key = lambda annotation : annotation[u'score'] , reverse = True)[0]
+        landmark_name = landmark[u'description']
+        if landmark_name.lower() in COMMON_LANDMARKS:
+          stickers.append(landmark_name)
+          # Only one landmark per page
+          #break
+      except KeyError:
+        pass
+
+
+
+    logging.info("Stickers: " + str(stickers))
 
     average_rgb = [ sum(reds)/len(reds), sum(greens)/len(greens), sum(blues)/len(blues)]
     rgb_colors.append(average_rgb)
+
+    logging.info("Sending " + str(len(rgb_colors)) + " colors to colormind")
 
     palette_response = fetch(
                          'http://colormind.io/api/',
@@ -308,7 +358,7 @@ def get_dominant_colors(image_keys):
                          headers={"Content-Type": "application/json"}
                          )
     palette = loads(palette_response.content)[u'result']
-    return palette
+    return (palette, stickers)
 
 
 def vision_api_web_detection_colors(info):
