@@ -19,8 +19,6 @@ class Construct(webapp2.RequestHandler):
         for image_file in imgs:
             img = Image.open(blobstore.BlobReader(image_file))
             (w, h) = img.size
-<<<<<<< HEAD
-            logging.info(img.size)
             p_ratio = float(h)/float(w)
             ratio[image_file] = p_ratio
             if p_ratio < 1 :
@@ -57,15 +55,9 @@ class Construct(webapp2.RequestHandler):
                     continue
             pages.append( ["1"] + [imgs[cursor]] )
             cursor += 1
-        logging.info(pages)
-        logging.info(shape)
-=======
-            # logging.info(h)
-            ratio[image_file] = float(h)/float(w)
->>>>>>> 4da4996bc98102b2ddbe2bb2ad0e74cb491fe28d
-        logging.info(ratio)
 
         account = album.key.parent().get()
+        utils.get_details_from_cloud_vision(imgs)
         html = utils.generate_html(album.key, pages, ratio)
         filename = utils.get_html_filename(account, album.key.urlsafe())
         utils.upload_text_file_to_cloudstorage(filename, html)

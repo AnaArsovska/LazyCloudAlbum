@@ -15,7 +15,7 @@ $shadow-up: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
 
 header, footer, li, .button {
    -webkit-box-shadow: $shadow;
-           box-shadow: $shadow;
+   box-shadow: $shadow;
 }
 
 body {
@@ -27,21 +27,21 @@ body {
    display: flex;
    -webkit-box-orient: vertical;
    -webkit-box-direction: normal;
-       -ms-flex-direction: column;
-           flex-direction: column;
+   -ms-flex-direction: column;
+   flex-direction: column;
    min-height: 100vh;
    font-family: $normal, sans-serif;
    color: $dark;
 
    &::after {
       -webkit-box-flex:1;
-          -ms-flex:1;
-              flex:1;
+      -ms-flex:1;
+      flex:1;
       height: 100%;
       content: " ";
       -webkit-box-ordinal-group:5;
-          -ms-flex-order:4;
-              order:4;
+      -ms-flex-order:4;
+      order:4;
    }
 }
 
@@ -57,18 +57,18 @@ a{
 
 header {
    -webkit-box-ordinal-group:2;
-       -ms-flex-order:1;
-           order:1;
+   -ms-flex-order:1;
+   order:1;
    background-color: $main;
    display: -webkit-box;
    display: -ms-flexbox;
    display: flex;
    -webkit-box-align: end;
-       -ms-flex-align: end;
-           align-items: flex-end;
+   -ms-flex-align: end;
+   align-items: flex-end;
    -webkit-box-pack: justify;
-       -ms-flex-pack: justify;
-           justify-content: space-between;
+   -ms-flex-pack: justify;
+   justify-content: space-between;
    padding: 1em;
    text-align: right;
    color: darken($light, 40%);
@@ -88,16 +88,16 @@ header {
 
 footer{
    -webkit-box-ordinal-group:6;
-       -ms-flex-order:5;
-           order:5;
+   -ms-flex-order:5;
+   order:5;
    background-color: $dark;
    color: $main;
    display: -webkit-box;
    display: -ms-flexbox;
    display: flex;
    -webkit-box-pack: start;
-       -ms-flex-pack: start;
-           justify-content: flex-start;
+   -ms-flex-pack: start;
+   justify-content: flex-start;
    a{
       display: block;
       margin: 24px;
@@ -111,8 +111,8 @@ footer{
 
 #content {
    -webkit-box-ordinal-group:4;
-       -ms-flex-order:3;
-           order:3;
+   -ms-flex-order:3;
+   order:3;
    display: grid;
    grid-template-columns: repeat(12, 1fr ) ;
    grid-column-gap: 24px;
@@ -140,7 +140,7 @@ li {
 
 li:hover, li:active {
    -webkit-box-shadow: $shadow-up;
-           box-shadow: $shadow-up;
+   box-shadow: $shadow-up;
 }
 
 .album_info{
@@ -159,20 +159,20 @@ li.next_album {
    border-color: $light;
    background-color: transparent;
    -webkit-box-shadow: none;
-           box-shadow: none;
+   box-shadow: none;
    text-align: center;
    display: -webkit-box;
    display: -ms-flexbox;
    display: flex;
    -webkit-box-align: stretch;
-       -ms-flex-align: stretch;
-           align-items: stretch;
+   -ms-flex-align: stretch;
+   align-items: stretch;
    -webkit-transition: .5s ease;
    transition: .5s ease;
    a {
       -webkit-box-flex: 1;
-          -ms-flex: 1;
-              flex: 1;
+      -ms-flex: 1;
+      flex: 1;
       color: $accent-dark;
    }
 
@@ -334,7 +334,7 @@ form {
    &:active {
       background-color: darken($accent-dark, 10%);
       -webkit-box-shadow: 0 0 0 0;
-              box-shadow: 0 0 0 0;
+      box-shadow: 0 0 0 0;
    }
    &:focus {
       outline:0;
@@ -391,13 +391,13 @@ input[type="file"]{
    margin: 5px;
    overflow: hidden;
    -webkit-box-shadow: $shadow;
-           box-shadow: $shadow;
+   box-shadow: $shadow;
    img{
       height: 100px;
       -webkit-transition: .5s;
       transition: .5s;
       -webkit-filter: blur(0px);
-              filter: blur(0px);
+      filter: blur(0px);
       overflow: hidden;
    }
 
@@ -431,7 +431,7 @@ input[type="file"]{
    &:hover{
       img {
          -webkit-filter: blur(.5px) ;
-                 filter: blur(.5px) ;
+         filter: blur(.5px) ;
       }
       &::after {
          opacity: 1.0;
@@ -464,11 +464,11 @@ input[type="file"]{
    display: flex;
    grid-column: span 1;
    -webkit-box-pack: center;
-       -ms-flex-pack: center;
-           justify-content: center;
+   -ms-flex-pack: center;
+   justify-content: center;
    -webkit-box-align: center;
-       -ms-flex-align: center;
-           align-items: center;
+   -ms-flex-align: center;
+   align-items: center;
    font-size: 300%;
    -webkit-transition: .5s;
    transition: .5s;
@@ -486,8 +486,8 @@ input[type="file"]{
 #album {
    -webkit-box-orient: horizontal;
    -webkit-box-direction: normal;
-       -ms-flex-direction: row;
-           flex-direction: row;
+   -ms-flex-direction: row;
+   flex-direction: row;
    display: -webkit-box;
    display: -ms-flexbox;
    display: flex;
@@ -504,7 +504,7 @@ input[type="file"]{
 
 .page{
    -ms-flex-negative: 0;
-       flex-shrink: 0;
+   flex-shrink: 0;
    width:50%;
    position: relative;
    left: 0%;
@@ -526,20 +526,31 @@ input[type="file"]{
    position: absolute;
    width: 100%;
    height: 100%;
-   background-color: blue;
+   background-color: lightgrey;
    display: grid;
 }
 .resizer{
-   padding: .5vw;
+   padding: 2vw;
+   height: 100%;
    display: -webkit-box;
    display: -ms-flexbox;
    display: flex;
+   -webkit-box-sizing: border-box;
+   box-sizing: border-box;
    -webkit-box-pack: center;
-       -ms-flex-pack: center;
-           justify-content: center;
+   -ms-flex-pack: center;
+   justify-content: center;
    -webkit-box-align: center;
-       -ms-flex-align: center;
-           align-items: center;
+   -ms-flex-align: center;
+   align-items: center;
+
+   img {
+      max-height: 92%;
+      max-width: 92%;
+      padding: 1vw;
+      background-color: grey;
+      border: black solid .3vw;
+   }
 
 }
 .border{
@@ -548,22 +559,11 @@ input[type="file"]{
    border: black solid .3vw;
    max-width: 95%;
    max-height: 95%;
-   -webkit-box-sizing: border-box;
-           box-sizing: border-box;
-
-  img {
-    max-height: 100%;
-    max-width: 100%;
-    -o-object-fit: contain;
-        object-fit: contain;
-    -webkit-box-shadow: $shadow;
-             box-shadow: $shadow;
-  }
 }
 #browser_warning {
    -webkit-box-ordinal-group:3;
-       -ms-flex-order:2;
-           order:2;
+   -ms-flex-order:2;
+   order:2;
    text-align: center;
    border: $accent-dark 3px solid;
    margin: 12px;

@@ -2,8 +2,7 @@ from google.appengine.api import users, mail
 from google.appengine.ext import ndb
 from models import *
 from json import dumps, loads
-from google.appengine.api.urlfetch import fetch, POST
-from google.appengine.api import images
+from google.appengine.api import images, urlfetch
 from google.appengine.ext import blobstore
 from google.appengine.ext.blobstore import BlobKey
 import base64
@@ -158,10 +157,7 @@ def upload_album_images_to_cloud_storage(account, album, images):
         data = blobstore.BlobReader(image.key()).read()
 
         image_name = get_photo_filename(account, album.key.urlsafe(), image)
-<<<<<<< HEAD
-=======
         #headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
->>>>>>> 4da4996bc98102b2ddbe2bb2ad0e74cb491fe28d
         headers =  {"Content-Type": "image/jpeg"}
         (status, headers, content) = storage_api.do_request(UPLOAD_BASE_URL_CS + image_name, 'POST', headers, data)
         if status != 200:
@@ -212,16 +208,19 @@ def generate_html(album_key, pages, ratios):
   letters = ["a", "b", "c"]
   for page in pages:
     page_imgs = page[1:]
+
+    get_details_from_cloud_vision(page_imgs)
+
     img_tags = ""
 
     for image in page_imgs:
       image_url = images.get_serving_url( image, size=300)
-      img_tags += """<div class = 'resizer' style='grid-area:%s;' > <div class="border"> <img src='%s'/></div></div>""" % (letters[page_imgs.index(image)], image_url)
+      logging.info(image_url)
+      img_tags += """<div class = 'resizer' style='grid-area:%s;' > <img  src='%s'/> </div>""" % (letters[page_imgs.index(image)], image_url)
 
     style = ""
 
     r = map(lambda x: ratios[x], page_imgs)
-    logging.info(r)
     if page[0] == "3a": #ttw
         columns = "%d%% %d%%" % ( int(100*(1/r[0])/((1/r[0])+(1/r[1])) ), int(100*(1/r[1])/((1/r[0])+(1/r[1]))) )
         rows = "%d%% %d%%" % ( 60, 40 )
@@ -277,6 +276,8 @@ def generate_html(album_key, pages, ratios):
   return html
 
 def get_details_from_cloud_vision(image_keys):
+    urlfetch.set_default_fetch_deadline(600)
+
     COMMON_LANDMARKS = ["eiffel tower", "statue of liberty", "taj mahal", "golden gate bridge"]
     COMMON_LABELS = ["dog", "cat", "beach", "christmas", "valentine", "heart", "easter", "bunny", "bird"]
     with open("config.yaml", 'r') as stream:
@@ -310,9 +311,9 @@ def get_details_from_cloud_vision(image_keys):
         "requests": requests
     }
 
-    response = fetch(
+    response = urlfetch.fetch(
                      "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
-                     method=POST,
+                     method=urlfetch.POST,
                      payload=dumps(payload),
                      headers={"Content-Type": "application/json"}
                      )
@@ -374,9 +375,9 @@ def get_details_from_cloud_vision(image_keys):
 
     logging.info("Sending " + str(len(rgb_colors)) + " colors to colormind")
 
-    palette_response = fetch(
+    palette_response = urlfetch.fetch(
                          'http://colormind.io/api/',
-                         method=POST,
+                         method=urlfetch.POST,
                          payload= '{"input": %s , "model":"default" }' % (str(rgb_colors)),
                          headers={"Content-Type": "application/json"}
                          )
