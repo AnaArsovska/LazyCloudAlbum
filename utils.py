@@ -112,6 +112,12 @@ def get_photo_filename_by_key(account, album_key, photo_key):
     return account.user_id + "/" + str(album_key) + "/photos/" + str(photo_key)
 
 def clear_album_data(album):
+    """ Deletes all files from cloud storage and the blobstore for a given
+        album.
+
+        Args:
+          album: an Album entity
+        """
     storage_api = cloudstorage.storage_api._get_storage_api(None)
     for image_key in album.images:
         blobstore.delete(image_key)
@@ -128,6 +134,15 @@ def clear_album_data(album):
                                'DELETE')
 
 def get_html_from_cloud_storage(account, album_key):
+    """ Uploads a text file with the given name and contents to Cloud Storage.
+
+        Args:
+          account: an Account entity
+          album_key: urlsafe version of the entity key for the Album
+        
+        Logs an error if no HTML file could be found.
+
+        """
     storage_api = cloudstorage.storage_api._get_storage_api(None)
     file_name = get_html_filename(account, album_key)
     file_name = file_name.replace("/", "%2f")
@@ -140,6 +155,15 @@ def get_html_from_cloud_storage(account, album_key):
         return (False, "Error: No HTML found for the given user")
 
 def upload_text_file_to_cloudstorage(filename, contents):
+    """ Uploads a text file with the given name and contents to Cloud Storage.
+
+        Args:
+          filename: a string representing the name of the file (does not need to be URI safe)
+          contents: a string representing the contents of the file
+        
+        Logs an error if uploading failed.
+
+        """
     storage_api = cloudstorage.storage_api._get_storage_api(None)
     headers =  {"Content-Type": "text/plain"}
     logging.info("Saving text file with filename:" + filename)
@@ -152,12 +176,21 @@ def upload_text_file_to_cloudstorage(filename, contents):
 
 
 def upload_album_images_to_cloud_storage(account, album, images):
+    """ Uploads a set of images to google cloud storage.
+
+        Args:
+          account: an Account entity
+          album: an Album entity
+          images: a list of image data (from web form)
+        
+        Logs an error if uploading failed.
+
+        """
     storage_api = cloudstorage.storage_api._get_storage_api(None)
     for image in images:
         data = blobstore.BlobReader(image.key()).read()
 
         image_name = get_photo_filename(account, album.key.urlsafe(), image)
-        #headers =  {"Content-Type": "image/jpeg", "Content-Length": len(data)}
         headers =  {"Content-Type": "image/jpeg"}
         (status, headers, content) = storage_api.do_request(UPLOAD_BASE_URL_CS + image_name, 'POST', headers, data)
         if status != 200:
@@ -176,7 +209,10 @@ def generate_dummy_html(account, album_key, image_keys):
     for image in page_imgs:
       image_url = images.get_serving_url(BlobKey(image), size=300)
       image_filename = get_photo_filename_by_key(account, album_key, image)
-      color = str( (colors[i][0], colors [i][1], colors[i][2]))
+      if len(page_imgs) == 3:
+        color = str( (colors[i][0], colors [i][1], colors[i][2]))
+      elif len(page_imgs) == 2:
+        color = str( (colors[i*2][0], colors [i*2][1], colors[i*2][2]))
       logging.info("Got color for image: " + color)
       img_tags += """<img src='%s' style='background-color: rgb%s'/>""" % (image_url, color)
       i += 1
@@ -201,7 +237,6 @@ def generate_dummy_html(account, album_key, image_keys):
   return html
 
 
-
 def generate_html(album_key, pages, ratios):
   html = ""
   image_keys = album_key.get().images
@@ -215,7 +250,8 @@ def generate_html(album_key, pages, ratios):
 
     div_class = "%s %s" % (page[0], random.choice(patterns))
     if stickers:
-        div_class += " sticker %s" % stickers[0]
+        # Picks a random sticker from those found
+        div_class += " sticker %s" % random.choice(stickers)
 
     img_tags = ""
 
@@ -287,6 +323,17 @@ def generate_html(album_key, pages, ratios):
   return html
 
 def get_details_from_cloud_vision(image_keys):
+     """ Gets color, landmark, and label information for a page of images.
+
+        Args:
+          image_keys: A list of image blob keys
+        Returns:
+          The tuple (palette, stickers) where palette is a list of colors of the form:
+            [ [r, g, b], [r, g, b] ... ]
+          and stickers is a list of strings representing the potential stickers found
+          for the set of images given
+
+        """
     urlfetch.set_default_fetch_deadline(600)
 
     COMMON_LANDMARKS = ["eiffel tower", "statue of liberty", "taj mahal", "golden gate bridge"]
@@ -329,8 +376,6 @@ def get_details_from_cloud_vision(image_keys):
                      headers={"Content-Type": "application/json"}
                      )
     results = loads(response.content)
-    # logging.info("Result from vision api:")
-    # logging.info(results)
 
     rgb_colors = []
     reds = []
@@ -340,25 +385,20 @@ def get_details_from_cloud_vision(image_keys):
 
     for i in xrange(0, len(image_keys)):
       colors = results[u'responses'][i][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
-      #main_color = sorted(colors, key = lambda color : color[u'pixelFraction'] + color[u'score'] , reverse = True)[0]
-      if len(image_keys) < 3:
-        num_colors = 2 if len(image_keys) == 2 else 3
-        main_colors = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:num_colors]
-        for main_color in main_colors:
-          info = main_color[u'color']
-          rgb = [info[u'red'], info[u'green'], info[u'blue']]
-          reds.append(rgb[0])
-          greens.append(rgb[1])
-          blues.append(rgb[2])
-          rgb_colors.append(rgb)
+      if len(image_keys) == 1:
+        num_colors = 3
+      elif len(image_keys) == 2:
+        num_colors = 2
       else:
-        main_color = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0]
+        num_colors = 1
+      
+      main_colors = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:num_colors]
+      for main_color in main_colors:
         info = main_color[u'color']
         rgb = [info[u'red'], info[u'green'], info[u'blue']]
         reds.append(rgb[0])
         greens.append(rgb[1])
         blues.append(rgb[2])
-
         rgb_colors.append(rgb)
 
       logging.info("Length of stickers so far: " + str(len(stickers)))
@@ -394,7 +434,7 @@ def get_details_from_cloud_vision(image_keys):
                          )
     palette = loads(palette_response.content)[u'result']
 
-    # color at index 4 will be the background color of the page. This check here is to
+    # color at index 3 will be the background color of the page. This check here is to
     # catch the case where a grayscale image gets a super bright background
     is_grayscale = []
     for i in xrange(0, len(reds)):
@@ -405,10 +445,13 @@ def get_details_from_cloud_vision(image_keys):
         logging.info("Determined that color with rgb %d, %d, %d is NOT grayscale" % (reds[i], greens[i], blues[i]))
         is_grayscale.append(False)
 
-    [red, green, blue] = palette[3]
+    # If there were only two images, it's actually at the fifth index
+    bg_color_index = 4 if len(image_keys) == 2 else 3
+    [red, green, blue] = palette[bg_color_index]
     if not (abs(red - green) <= 25 and abs(red - blue) <= 25 and abs(green - blue) <= 25):
-      logging.info("Determined that the background color (%d, %d, %d) was too vibrant, resorting to average (%d, %d, %d)" % (palette[3][0], palette[3][1], palette[3][2], average_rgb[0], average_rgb[1], average_rgb[2]))
-      palette[3] = average_rgb
+      logging.info("Determined that the background color (%d, %d, %d) was too vibrant, resorting to average (%d, %d, %d)" % (
+          palette[bg_color_index][0], palette[bg_color_index][1], palette[bg_color_index][2], average_rgb[0], average_rgb[1], average_rgb[2]))
+      palette[bg_color_index] = average_rgb
 
     return (palette, stickers)
 
