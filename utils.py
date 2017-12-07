@@ -241,7 +241,7 @@ def generate_html(album_key, pages, ratios):
   html = ""
   image_keys = album_key.get().images
   letters = ["a", "b", "c"]
-  patterns = ["dots", "diamonds", "stripes"]
+  patterns = ["dots", "diamonds", "stripes", "circles", "waves"]
   page_num = 0
   for page in pages:
     page_imgs = page[1:]
@@ -391,7 +391,7 @@ def get_details_from_cloud_vision(image_keys):
       else:
         num_colors = 1
 
-      main_colors = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:num_colors]
+      main_colors = sorted(colors, key = lambda color : 2*color[u'pixelFraction'] + 1*color[u'score'] , reverse = True)[0:num_colors]
       for main_color in main_colors:
         info = main_color[u'color']
         rgb = [info[u'red'], info[u'green'], info[u'blue']]
