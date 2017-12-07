@@ -2,6 +2,7 @@
 
 {% block content %}
 {% if user and album.key.parent().get().user_id == user.user_id() %}
+<div id = "sec1">
 <form class = "edit" action="/edit/{{album.key.urlsafe()}}" method="post">
    <input name="title" id="title" type="text" class="edit"
    value={{album.title}}>
@@ -11,22 +12,24 @@
 </form>
 
 
-
 <button id = "delete" formaction="/edit/delete/{{album.key.urlsafe()}}" > <span> Delete <i class="fa fa-trash-o" aria-hidden="true"></i> </span></button>
+<button id = 'GeneratePDF'> PDF </button>
 
 <div class="fb-share-button"
     data-href="/view/{{album.key.urlsafe()}}"
     data-layout="button_count">
 </div>
-
+</div>
 {% else %}
 <h2 id = "sec1"> {{album.title}}</h2>
 {% endif %}
 
-<a href="#" onclick="return xepOnline.Formatter.Format('album',{render:'download', filename:'Your Lazy Album'});">
+<a id= "sec2" href="#" onclick="return xepOnline.Formatter.Format('album',{render:'download', filename:'Your Lazy Album'});">
    PDF
 </a>
-<div class = "arrow left disabled"><i class="fa fa-chevron-left"></i> </div>
+
+<div class = "arrow left"><i class="fa fa-chevron-left"></i> </div>
+
 <div id = "album">
    {{saved_html}}
 </div>
@@ -46,13 +49,25 @@ function updateAlbum(dir) {
       updateAlbum.view_num = 0;
       updateAlbum.pages = $(".page").length - 2; //Account for pages on screen
    }
-   if (dir & updateAlbum.view_num < updateAlbum.pages ){
+   if (dir & updateAlbum.view_num < updateAlbum.pages){
       updateAlbum.view_num += 2;
    } else if (!dir & updateAlbum.view_num > 0) {
       updateAlbum.view_num -= 2;
    }
+
+   if (updateAlbum.view_num == updateAlbum.pages || updateAlbum.view_num == updateAlbum.pages + 1){
+      console.log("REMOVE");
+      $(".right").addClass("disabled");
+   } else {
+      $(".right").removeClass("disabled");
+   };
+   if (updateAlbum.view_num == 0) {
+      $(".left").addClass("disabled");
+   } else {
+      $(".left").removeClass("disabled");
+   };
+
    $(".page").animate({"left": -50*updateAlbum.view_num + "%"}, "slow", "swing");
-   console.log(updateAlbum.view_num);
 }
 
 $(".arrow").click( function(){
@@ -85,6 +100,22 @@ $("#delete").click( function(){
                            </br>
                            Deleting </h2>`);
 });
+$(function(ready){
+   updateAlbum(false);
+});
+
+$("#GeneratePDF").click( function(){
+    var pageID = [];
+    $(".page").each( function(){
+        pageID.push($(this).attr('id'));
+                    });
+    printAlbum(pageID);
+});
+
+function printAlbum(param0){
+    return xepOnline.Formatter.Format(param0,{render:'download', filename:'Your Lazy Album'});
+}
+
 
 </script>
 
