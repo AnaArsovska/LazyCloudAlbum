@@ -74,19 +74,12 @@ class Construct(webapp2.RequestHandler):
         #logging.info("Thread: Fetched the album!")
         album.ready = True
         album.put()
-<<<<<<< HEAD
         try:
             utils.send_album_email(self.request.get("name"), self.request.get("email"), "Album")
         except:
             pass
-=======
         logging.info("Thread: Marked album as ready!")
         logging.info("Done generating the html! Should also be updated now and all...")
-        #try:
-        #    utils.send_album_email(account.user_id, "Album")
-        #except:
-        #    pass name, email, album_key
->>>>>>> 99968d691ccd246fe521d001a4c1fa6e5a812a32
 
 class Delete(webapp2.RequestHandler):
     @ndb.transactional

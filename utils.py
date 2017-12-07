@@ -139,7 +139,7 @@ def get_html_from_cloud_storage(account, album_key):
         Args:
           account: an Account entity
           album_key: urlsafe version of the entity key for the Album
-        
+
         Logs an error if no HTML file could be found.
 
         """
@@ -160,7 +160,7 @@ def upload_text_file_to_cloudstorage(filename, contents):
         Args:
           filename: a string representing the name of the file (does not need to be URI safe)
           contents: a string representing the contents of the file
-        
+
         Logs an error if uploading failed.
 
         """
@@ -182,7 +182,7 @@ def upload_album_images_to_cloud_storage(account, album, images):
           account: an Account entity
           album: an Album entity
           images: a list of image data (from web form)
-        
+
         Logs an error if uploading failed.
 
         """
@@ -323,17 +323,16 @@ def generate_html(album_key, pages, ratios):
   return html
 
 def get_details_from_cloud_vision(image_keys):
-     """ Gets color, landmark, and label information for a page of images.
+    """ Gets color, landmark, and label information for a page of images.
 
-        Args:
-          image_keys: A list of image blob keys
-        Returns:
-          The tuple (palette, stickers) where palette is a list of colors of the form:
-            [ [r, g, b], [r, g, b] ... ]
-          and stickers is a list of strings representing the potential stickers found
-          for the set of images given
-
-        """
+    Args:
+    image_keys: A list of image blob keys
+    Returns:
+    The tuple (palette, stickers) where palette is a list of colors of the form:
+    [ [r, g, b], [r, g, b] ... ]
+    and stickers is a list of strings representing the potential stickers found
+    for the set of images given
+    """
     urlfetch.set_default_fetch_deadline(600)
 
     COMMON_LANDMARKS = ["eiffel tower", "statue of liberty", "taj mahal", "golden gate bridge"]
@@ -391,7 +390,7 @@ def get_details_from_cloud_vision(image_keys):
         num_colors = 2
       else:
         num_colors = 1
-      
+
       main_colors = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:num_colors]
       for main_color in main_colors:
         info = main_color[u'color']

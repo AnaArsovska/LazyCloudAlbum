@@ -619,11 +619,10 @@ input[type="file"]{
 }
 
 .dots:before {
-   background: radial-gradient( black 16%, transparent 15%),
+   background: radial-gradient( black 14%, transparent 15%),
                radial-gradient( black 14%, transparent 15%);
    background-position: 0 0, center;
    background-size: 10% 10%;
-   mix-blend-mode: overlay;
 }
 #browser_warning {
    -webkit-box-ordinal-group:3;
