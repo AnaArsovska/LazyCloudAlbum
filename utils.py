@@ -206,16 +206,16 @@ def generate_html(album_key, pages, ratios):
   html = ""
   image_keys = album_key.get().images
   letters = ["a", "b", "c"]
+  patterns = ["dots", "diamonds", "stripes", "waves"]
   page_num = 0
   for page in pages:
     page_imgs = page[1:]
 
     (palette, stickers) = get_details_from_cloud_vision(page_imgs)
 
-    div_class = page[0]
+    div_class = "%s %s" % (page[0], random.choice(patterns))
     if stickers:
         div_class += " sticker %s" % stickers[0]
-
 
     img_tags = ""
 
@@ -223,7 +223,7 @@ def generate_html(album_key, pages, ratios):
         i = page_imgs.index(image)
         image_url = images.get_serving_url( image, size=300)
         logging.info(image_url)
-        img_tags += """<div class='resizer' style='grid-area:%s;'> <img src='%s' style ='background-color: rgb%s'/> </div>""" % (letters[i], image_url, str(tuple(palette[i])))
+        img_tags += """<div class='resizer' style='grid-area:%s;'> <img src='%s' style ='color: rgb%s'/> </div>""" % (letters[i], image_url, str(tuple(palette[i])))
 
     style = ""
 
