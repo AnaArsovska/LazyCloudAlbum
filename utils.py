@@ -204,7 +204,6 @@ def generate_dummy_html(account, album_key, image_keys):
   return html
 
 
-
 def generate_html(album_key, pages, ratios):
   html = ""
   image_keys = album_key.get().images
@@ -397,7 +396,7 @@ def get_details_from_cloud_vision(image_keys):
                          )
     palette = loads(palette_response.content)[u'result']
 
-    # color at index 4 will be the background color of the page. This check here is to
+    # color at index 3 will be the background color of the page. This check here is to
     # catch the case where a grayscale image gets a super bright background
     is_grayscale = []
     for i in xrange(0, len(reds)):
@@ -408,10 +407,13 @@ def get_details_from_cloud_vision(image_keys):
         logging.info("Determined that color with rgb %d, %d, %d is NOT grayscale" % (reds[i], greens[i], blues[i]))
         is_grayscale.append(False)
 
-    [red, green, blue] = palette[3]
+    # If there were only two images, it's actually at the fifth index
+    bg_color_index = 4 if len(image_keys) == 2 else 3
+    [red, green, blue] = palette[bg_color_index]
     if not (abs(red - green) <= 25 and abs(red - blue) <= 25 and abs(green - blue) <= 25):
-      logging.info("Determined that the background color (%d, %d, %d) was too vibrant, resorting to average (%d, %d, %d)" % (palette[3][0], palette[3][1], palette[3][2], average_rgb[0], average_rgb[1], average_rgb[2]))
-      palette[3] = average_rgb
+      logging.info("Determined that the background color (%d, %d, %d) was too vibrant, resorting to average (%d, %d, %d)" % (
+          palette[bg_color_index][0], palette[bg_color_index][1], palette[bg_color_index][2], average_rgb[0], average_rgb[1], average_rgb[2]))
+      palette[bg_color_index] = average_rgb
 
     return (palette, stickers)
 
