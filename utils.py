@@ -176,7 +176,10 @@ def generate_dummy_html(account, album_key, image_keys):
     for image in page_imgs:
       image_url = images.get_serving_url(BlobKey(image), size=300)
       image_filename = get_photo_filename_by_key(account, album_key, image)
-      color = str( (colors[i][0], colors [i][1], colors[i][2]))
+      if len(page_imgs) == 3:
+        color = str( (colors[i][0], colors [i][1], colors[i][2]))
+      elif len(page_imgs) == 2:
+        color = str( (colors[i*2][0], colors [i*2][1], colors[i*2][2]))
       logging.info("Got color for image: " + color)
       img_tags += """<img src='%s' style='background-color: rgb%s'/>""" % (image_url, color)
       i += 1
