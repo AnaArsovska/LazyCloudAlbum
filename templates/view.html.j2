@@ -6,7 +6,7 @@
 <form class = "edit" action="/edit/{{album.key.urlsafe()}}" method="post">
    <input name="title" id="title" type="text" class="edit"
    value={{album.title}}>
-   <input type="checkbox" id="public" {%if album.public%} checked {%endif%}>
+   <input type="checkbox" name= "public" id="public" {%if album.public%} checked {%endif%}>
    <label for="public">Public</label>
    <button type="submit"> Save </button>
 </form>

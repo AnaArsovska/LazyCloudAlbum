@@ -62,10 +62,10 @@ class Construct(webapp2.RequestHandler):
         utils.upload_text_file_to_cloudstorage(filename, html)
         album.ready = True
         album.put()
-        #try:
-        #    utils.send_album_email(account.user_id, "Album")
-        #except:
-        #    pass name, email, album_key
+        try:
+            utils.send_album_email(self.request.get("name"), self.request.get("email"), "Album")
+        except:
+            pass
 
 class Delete(webapp2.RequestHandler):
     @ndb.transactional

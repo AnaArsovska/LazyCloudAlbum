@@ -25,7 +25,6 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
         account = utils.get_account()
         album = models.Album( parent = account.key )
         album.public = album.public = True if self.request.get('public') else False #bool() not working
-
         if self.get_uploads():
             uploads = [x for x in self.get_uploads() if x.size < 4000000]
 
@@ -55,9 +54,13 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
 
         album.put()
 
+        user = users.get_current_user()
+
         task = taskqueue.add(
            url='/construction',
-           params={'album': album.key.urlsafe()},
+           params={'album': album.key.urlsafe(),
+                    'email':user.email(),
+                    'name': user.nickname() },
            target = 'worker',
            transactional = True)
 
@@ -102,7 +105,8 @@ class EditHandler(webapp2.RequestHandler):
         title = str(self.request.get('title')).strip()
         if title :
             album.title = title
-        album.public = bool(self.request.get("public"))
+        album.public = True if self.request.get('public') else False #bool() not working
+        logging.info(self.request.get('public'))
         album.put()
         self.redirect('/')
 

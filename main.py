@@ -72,7 +72,7 @@ class ViewPage(webapp2.RequestHandler):
         album = utils.get_album_by_key(album_key)
         if album:
             # Show album only if it is public or the current user is the owner
-            if album.public or album.key.parent().get().user_id == context['user'].user_id() :
+            if album.public or (context['user'] and album.key.parent().get().user_id == context['user'].user_id()) :
                 context['album'] = album
                 context["delete"] = "/edit/delete/" + album_key
                 image_urls = []
