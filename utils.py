@@ -241,7 +241,7 @@ def generate_html(album_key, pages, ratios):
   html = ""
   image_keys = album_key.get().images
   letters = ["a", "b", "c"]
-  patterns = ["dots", "diamonds", "stripes", "waves"]
+  patterns = ["dots", "diamonds", "stripes"]
   page_num = 0
   for page in pages:
     page_imgs = page[1:]

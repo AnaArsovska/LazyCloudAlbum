@@ -562,7 +562,7 @@ input[type="file"]{
       content: "";
       opacity: .1;
       z-index: 2;
-      mix-blend-mode: burn;
+      mix-blend-mode: screen;
    }
 }
 .resizer{
@@ -600,14 +600,13 @@ input[type="file"]{
 
 }
 .stripes:before {
-   background: repeating-linear-gradient(60deg, transparent 0%, black 0%, black .5%, transparent .5%, transparent 3%);
-   background-blend-mode: screen;
+   background: repeating-linear-gradient(60deg, transparent 0%, white 0%, white .5%, transparent .5%, transparent 3%);
 }
 
 .diamonds:before{
-   background: repeating-linear-gradient(60deg, white 0%, black 0%, black 1%, white 1%, white 4%),
-               repeating-linear-gradient(120deg, white 0%, black 0%, black 1%, white 1%, white 4%);
-   background-blend-mode: screen;
+   background: repeating-linear-gradient(60deg, black 0%, white 0%, white 1%, black 1%, black 4%),
+               repeating-linear-gradient(120deg, black 0%, white 0%, white 1%, black 1%, black 4%);
+   background-blend-mode: multiply;
 }
 
 .waves:before{
@@ -619,8 +618,8 @@ input[type="file"]{
 }
 
 .dots:before {
-   background: radial-gradient( black 14%, transparent 15%),
-               radial-gradient( black 14%, transparent 15%);
+   background: radial-gradient( white 14%, transparent 15%),
+               radial-gradient( white 14%, transparent 15%);
    background-position: 0 0, center;
    background-size: 10% 10%;
 }
