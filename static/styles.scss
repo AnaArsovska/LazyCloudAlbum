@@ -568,6 +568,7 @@ input[type="file"]{
 .resizer{
    padding: 2vw;
    height: 100%;
+   width:100%;
    display: -webkit-box;
    display: -ms-flexbox;
    display: flex;
@@ -591,10 +592,10 @@ input[type="file"]{
          0px 1px 3px 13px rgba(0,0,0,.12),
          0px 1px 2px 13px rgba(0,0,0,.24);
               box-shadow: $shadow,
-         0px 0px 0px 10px,
-         0px 0px 0px 13px rgba(0,0,0,.5),
-         0px 1px 3px 13px rgba(0,0,0,.12),
-         0px 1px 2px 13px rgba(0,0,0,.24);
+         0px 0px 0px 1vw,
+         0px 0px 0px 1.2vw rgba(0,0,0,.5),
+         0px 1px 3px 1.2vw rgba(0,0,0,.12),
+         0px 1px 2px 1.2vw rgba(0,0,0,.24);
 
    }
 
