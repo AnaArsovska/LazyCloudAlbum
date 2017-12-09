@@ -378,9 +378,9 @@ def get_details_from_cloud_vision(image_keys):
       img_size = len(data)
       logging.info("Current image size: %d. Payload size so far: %d" % (img_size, current_payload_img_size))
 
-      # Estimate for 8MB (underestimate). Starts new payload if current image
+      # Estimate for 8MB (underestimate based on experience). Starts new payload if current image
       # cannot fit inside the current payload
-      if (current_payload_img_size + img_size) >= (8000000):
+      if (current_payload_img_size + img_size) >= (7800000):
           logging.info("Image with size %d was too big to fit in payload with current size %d. Starting new batch" % (img_size, current_payload_img_size))
           results.extend(make_cloud_vision_api_call(requests))
 

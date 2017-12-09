@@ -99,12 +99,26 @@ $(function(ready){
       //waits for file input to be selected then previews images
       var F = this.files;
 
+      $("#size_warning").remove();
+
+      var images_removed = 0;
       if (F && F[0]) {
          var use_image = [];
          for (var i = 0; i < F.length; i++) {
             use_image[i] = readImage(this, F[i], i);
+            if (use_image[i] == 0) {
+               images_removed++;
+            }
          }
          $(this).parent().data("use_image", use_image);
+         if (images_removed > 0) {
+            if (images_removed == 1) {
+               $("#img_inputs").after("<span class='message warning' id='size_warning'> Warning: 1 image above 4MB was removed.</span>");
+            } else {
+               $("#img_inputs").after("<span class='message warning' id='size_warning'> Warning: " + images_removed + " images above 4MB were removed.</span>");
+            }
+            
+         }
       };
       $(this).hide();
       addInput();
