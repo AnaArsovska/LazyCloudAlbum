@@ -291,7 +291,7 @@ def generate_html(album_key, pages, ratios):
   account = album_key.parent().get()
   image_keys = album_key.get().images
   letters = ["a", "b", "c"]
-  patterns = ["dots", "diamonds", "stripes"]
+  patterns = ["dots", "diamonds", "stripes", "circles", "waves", "vStripes", "argyle"]
   page_num = 0
   for page in pages:
     page_imgs = page[1:]
@@ -532,7 +532,6 @@ def get_details_from_cloud_vision(account, album_key, image_keys):
     # i is the current index into the results array (responses from cloud vision, not cached)
     i = 0
     for image_key in image_keys:
-
       if image_key in cached_results:
         colors = cached_results[image_key]["colors"]
         labels = cached_results[image_key]["labels"]
@@ -616,12 +615,15 @@ def get_details_from_cloud_vision(account, album_key, image_keys):
     # If there were only two images, it's actually at the fifth index
     bg_color_index = 4 if len(image_keys) == 2 else 3
     [red, green, blue] = palette[bg_color_index]
-    if not (abs(red - green) <= 25 and abs(red - blue) <= 25 and abs(green - blue) <= 25):
-      logging.info("Determined that the background color (%d, %d, %d) was too vibrant, resorting to average (%d, %d, %d)" % (
-          palette[bg_color_index][0], palette[bg_color_index][1], palette[bg_color_index][2], average_rgb[0], average_rgb[1], average_rgb[2]))
-      palette[bg_color_index] = average_rgb
+    # if not (abs(red - green) <= 25 and abs(red - blue) <= 25 and abs(green - blue) <= 25):
+    #   logging.info("Determined that the background color (%d, %d, %d) was too vibrant, resorting to average (%d, %d, %d)" % (
+    #       palette[bg_color_index][0], palette[bg_color_index][1], palette[bg_color_index][2], average_rgb[0], average_rgb[1], average_rgb[2]))
+    #   palette[bg_color_index] = average_rgb
 
-    return (palette, stickers)
+    corrected_palette = [];
+    for color in palette:
+        corrected_palette.append(desaturate(color))
+    return (corrected_palette, stickers)
 
 def send_album_email(name, email, album_key):
     logging.info("sending mail!")
@@ -639,3 +641,15 @@ def send_album_email(name, email, album_key):
         <a href = '%s'> Check it out! </a>
         """ % (name, title, url)
          )
+
+def desaturate(color):
+    new_color = color
+    avg = sum(color)/3
+    diffs = map(lambda x: abs(x-avg) , color)
+    sum_diffs = sum(diffs)
+    if sum_diffs > 50:
+        a = (float(sum_diffs-50)/100)**2
+        logging.info(a)
+        new_color = map(lambda x:int((x+a*avg)/(1+a)), color)
+        logging.info("%s might be bright, trying %s" % (str(color), str(new_color)))
+    return new_color

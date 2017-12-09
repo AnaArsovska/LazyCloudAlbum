@@ -5,7 +5,7 @@
 <div id = "sec1">
 <form class = "edit" action="/edit/{{album.key.urlsafe()}}" method="post">
    <input name="title" id="title" type="text" class="edit"
-   value={{album.title}}>
+   value='{{album.title}}'>
    <input type="checkbox" name= "public" id="public" {%if album.public%} checked {%endif%}>
    <label for="public">Public</label>
    <button type="submit"> Save </button>
@@ -14,7 +14,6 @@
 
 <button id = "delete" formaction="/edit/delete/{{album.key.urlsafe()}}" > <span> Delete <i class="fa fa-trash-o" aria-hidden="true"></i> </span></button>
 <button id = 'GeneratePDF'> PDF </button>
-
 <div class="fb-share-button"
     data-href="/view/{{album.key.urlsafe()}}"
     data-layout="button_count">
