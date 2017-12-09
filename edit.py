@@ -62,7 +62,7 @@ class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
                     'email':user.email(),
                     'name': user.nickname() },
            target = 'worker',
-           retry_options=taskqueue.TaskRetryOptions(task_retry_limit=5),
+           retry_options=taskqueue.TaskRetryOptions(task_retry_limit=3),
            transactional = True)
 
         #redirect moved to javascript, browser doesn't honor ajax redirects
