@@ -322,6 +322,35 @@ def generate_html(album_key, pages, ratios):
 
   return html
 
+def make_cloud_vision_api_call(requests):
+    """ Makes a call to the google cloud vision api with the given payload. This is used to 
+      simplify the batched vs single-image request logic in get_details_from_cloud_vision.
+      
+      Args:
+      requests: a list of requests to google cloud vision each containing an "image" key and "features" key
+
+      Returns:
+      A response containing the list of responses
+     """
+    logging.info("Making api call to cloud vision with %d requests" % (len(requests)))
+    with open("config.yaml", 'r') as stream:
+        config = yaml.load(stream)
+
+    payload = {
+        "requests": requests
+    }
+
+    response = urlfetch.fetch(
+                     "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
+                     method=urlfetch.POST,
+                     payload=dumps(payload),
+                     headers={"Content-Type": "application/json"}
+                     )
+    results = loads(response.content)
+    #logging.info("Str representation of what I'm returning: " + str(results[u'responses']))
+    return results[u'responses']
+
+
 def get_details_from_cloud_vision(image_keys):
     """ Gets color, landmark, and label information for a page of images.
 
@@ -335,14 +364,29 @@ def get_details_from_cloud_vision(image_keys):
     """
     urlfetch.set_default_fetch_deadline(600)
 
+    # logging.info("Going to arbitrarily throw an exception here...")
+    # raise Exception("Random exception I'm throwing!")
+
     COMMON_LANDMARKS = ["eiffel tower", "statue of liberty", "taj mahal", "golden gate bridge"]
     COMMON_LABELS = ["dog", "cat", "beach", "christmas", "valentine", "heart", "easter", "bunny", "bird"]
-    with open("config.yaml", 'r') as stream:
-        config = yaml.load(stream)
 
     requests = []
+    results = []
+    current_payload_img_size = 0
     for image_key in image_keys:
       data = blobstore.BlobReader(image_key).read()
+      img_size = len(data)
+      logging.info("Current image size: %d. Payload size so far: %d" % (img_size, current_payload_img_size))
+
+      # Estimate for 8MB (underestimate). Starts new payload if current image
+      # cannot fit inside the current payload
+      if (current_payload_img_size + img_size) >= (8000000):
+          logging.info("Image with size %d was too big to fit in payload with current size %d. Starting new batch" % (img_size, current_payload_img_size))
+          results.extend(make_cloud_vision_api_call(requests))
+
+          current_payload_img_size = 0
+          requests = []
+
       string = base64.b64encode(data)
       requests.append({
                      "image": {
@@ -364,17 +408,12 @@ def get_details_from_cloud_vision(image_keys):
                                   }
                                 ]
                      })
-    payload = {
-        "requests": requests
-    }
+      current_payload_img_size += img_size
 
-    response = urlfetch.fetch(
-                     "https://vision.googleapis.com/v1/images:annotate?key=" + config["API_Key"],
-                     method=urlfetch.POST,
-                     payload=dumps(payload),
-                     headers={"Content-Type": "application/json"}
-                     )
-    results = loads(response.content)
+    if requests:
+        results.extend(make_cloud_vision_api_call(requests))
+
+    logging.info("Str representation of the final aggregated results: " + str(results))
 
     rgb_colors = []
     reds = []
@@ -383,7 +422,7 @@ def get_details_from_cloud_vision(image_keys):
     stickers = []
 
     for i in xrange(0, len(image_keys)):
-      colors = results[u'responses'][i][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
+      colors = results[i][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
       if len(image_keys) == 1:
         num_colors = 3
       elif len(image_keys) == 2:
@@ -402,7 +441,7 @@ def get_details_from_cloud_vision(image_keys):
 
       logging.info("Length of stickers so far: " + str(len(stickers)))
 
-      labels = results[u'responses'][0][u'labelAnnotations']
+      labels = results[i][u'labelAnnotations']
       labels = sorted(labels, key = lambda annotation : annotation[u'score'] , reverse = True)[0:5]
       for label in labels:
         label = label[u'description']
@@ -410,7 +449,7 @@ def get_details_from_cloud_vision(image_keys):
           stickers.append(label)
 
       try:
-        landmark = results[u'responses'][i][u'landmarkAnnotations']
+        landmark = results[i][u'landmarkAnnotations']
         landmark = sorted(landmark, key = lambda annotation : annotation[u'score'] , reverse = True)[0]
         landmark_name = landmark[u'description']
         if landmark_name.lower() in COMMON_LANDMARKS:
@@ -458,7 +497,7 @@ def send_album_email(name, email, album_key):
     logging.info("sending mail!")
     album = get_album_by_key(album_key)
     title = album.title
-    url = "lazycloudalbum.appspot.com/create/%s" % (album_key)
+    url = "lazycloudalbum.appspot.com/view/%s" % (album_key)
     mail.send_mail(
         sender="noreply@lazycloudalbum.appspotmail.com",
         subject= "%s has been built!" %(title),
@@ -468,5 +507,5 @@ def send_album_email(name, email, album_key):
 
         We've finished putting together your '%s' album.
         <a href = '%s'> Check it out! </a>
-        """ % (name, title, )
+        """ % (name, title, url)
          )
