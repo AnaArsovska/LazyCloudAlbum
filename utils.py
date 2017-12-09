@@ -194,7 +194,7 @@ def upload_album_images_to_cloud_storage(account, album, images):
         headers =  {"Content-Type": "image/jpeg"}
         (status, headers, content) = storage_api.do_request(UPLOAD_BASE_URL_CS + image_name, 'POST', headers, data)
         if status != 200:
-          logging.error("Uploading image with filename " + image_name + " failed with status code " + status + " Headers: " + headers)
+          logging.error("Uploading image with filename " + image_name + " failed with status code " + str(status) + " Headers: " + str(headers))
 
 
 def generate_dummy_html(account, album_key, image_keys):
@@ -241,7 +241,7 @@ def generate_html(album_key, pages, ratios):
   html = ""
   image_keys = album_key.get().images
   letters = ["a", "b", "c"]
-  patterns = ["dots", "diamonds", "stripes", "circles", "waves", "vStripes"]
+  patterns = ["dots", "diamonds", "stripes", "circles", "waves", "vStripes", "argyle"]
   page_num = 0
   for page in pages:
     page_imgs = page[1:]
@@ -461,7 +461,7 @@ def send_album_email(name, email, album_key):
     logging.info("sending mail!")
     album = get_album_by_key(album_key)
     title = album.title
-    url = "lazycloudalbum.appspot.com/create/%s" % (album_key)
+    url = "lazycloudalbum.appspot.com/view/%s" % (album_key)
     mail.send_mail(
         sender="noreply@lazycloudalbum.appspotmail.com",
         subject= "%s has been built!" %(title),
@@ -471,7 +471,7 @@ def send_album_email(name, email, album_key):
 
         We've finished putting together your '%s' album.
         <a href = '%s'> Check it out! </a>
-        """ % (name, title, )
+        """ % (name, title, url)
          )
 
 def desaturate(color):
