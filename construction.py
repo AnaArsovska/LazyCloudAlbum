@@ -6,13 +6,33 @@ import threading
 from google.appengine.api import images
 from google.appengine.ext import blobstore, ndb
 from google.appengine.ext.blobstore import BlobKey
+from google.appengine.api.taskqueue import taskqueue
 from PIL import Image
 
 class Construct(webapp2.RequestHandler):
     def post(self):
+        retry_count = int(self.request.headers.get("X-AppEngine-TaskRetryCount"))
+        logging.info("Number of retries: " + str(retry_count))
+
         album_key = self.request.get("album")
         album = utils.get_album_by_key(album_key)
         user = album.key.parent().get()
+
+        # max tries we want to allow is 5
+        if retry_count >= 5:
+            # Deletes album. Parent checks aren't needed (I think) because the delete request is coming from
+            # us, not from the user
+            album.hidden = True
+            album.put()
+            task = taskqueue.add(
+               url='/delete',
+               params={'album': album_key},
+               target = 'worker')
+
+            # TODO: Need to send email about the album failing to build
+            logging.error("FAILED TO BUILD ALBUM WITH NAME: " + album.title + ". ORDINARILY AN EMAIL WOULD BE SENT HERE")
+            return
+        
         ratio = {}
         shape = {}
         imgs = album.images
@@ -62,24 +82,19 @@ class Construct(webapp2.RequestHandler):
         # t.start()
         # logging.info("Task queue item: Done starting thread, going to exit now")
         logging.info("Going to generate the html now...")
-        logging.info("Thread: generating html...")
         html = utils.generate_html(album.key, pages, ratio)
-        logging.info("Thread: Done generating html! Saving html file now for user %s and album %s..." % (account.user_id, album_key))
+        logging.info("Done generating html! Saving html file now for user %s and album %s..." % (account.user_id, album_key))
         filename = utils.get_html_filename(account, album.key.urlsafe())
         utils.upload_text_file_to_cloudstorage(filename, html)
-        logging.info("Thread: Done saving html file! Marking album as ready now...")
-        #mark_album_ready(album_key)
-        logging.info("Thread: About to try to fetch the album again...")
-        #album = utils.get_album_by_key(album_key)
-        #logging.info("Thread: Fetched the album!")
+        logging.info("Done saving html file! Marking album as ready now...")
         album.ready = True
         album.put()
+        
         try:
             utils.send_album_email(self.request.get("name"), self.request.get("email"), "Album")
         except:
             pass
-        logging.info("Thread: Marked album as ready!")
-        logging.info("Done generating the html! Should also be updated now and all...")
+        logging.info("Marked album as ready!")
 
 class Delete(webapp2.RequestHandler):
     @ndb.transactional
