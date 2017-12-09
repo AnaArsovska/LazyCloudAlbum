@@ -1,4 +1,5 @@
 $(document).ready(function(){
+   //Checks to see if FormData (used in image upload) is supported. 
    try {
       var formData = new FormData();
       formData.append("test","will it work?");

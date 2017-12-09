@@ -9,16 +9,14 @@ function sendForm(form) {
 
    var formData = new FormData(form);
 
+   //Iterates through all input elements and adds all uploads with use_img == 1
    $("input[type='file']").each( function(index){
       var use_img = $(this).parent().data("use_image");
       var F = this.files;
-      console.log(F);
-      console.log(use_img);
       if (F) {
          for (var i = 0; i < F.length; i++) {
             if (use_img[i]) {
                formData.append("uploads", F[i]);
-
             }
          }
       }
@@ -52,7 +50,7 @@ function sendForm(form) {
                            Uploading Pictures </h2>
                            This may take a moment`);
    $(".message:not(.warning):not(.note)").hide().delay(600).fadeIn("slow");
-   console.log(formData.get("uploads"));
+
    return false; // Prevent page from submitting.
 }
 
@@ -71,19 +69,19 @@ $(function(ready){
       var reader = new FileReader();
       var image  = new Image();
       reader.readAsDataURL(file);
-      if (file.size > 4000000){
+      if (file.size > 4000000){ //Ignores files that are too large
          return 0;
       };
 
       reader.onload = function(_file) {
-         image.src = _file.target.result; // url.createObjectURL(file);
+         image.src = _file.target.result;
          image.onload = function() {
             $(new_location).append(`<img src="${this.src}">`);
          };
 
-         image.onerror= function() {
+         image.onerror= function() { //If non-image file added, ignore input instance
             alert('Invalid file type: '+ file.type);
-            $(location).parent().remove(); //This doesn't seem to work
+            $(location).parent().remove();
          };
       };
 
@@ -102,7 +100,7 @@ $(function(ready){
       $("#size_warning").remove();
 
       var images_removed = 0;
-      if (F && F[0]) {
+      if (F && F[0]) { //Previews each image
          var use_image = [];
          for (var i = 0; i < F.length; i++) {
             use_image[i] = readImage(this, F[i], i);
@@ -111,27 +109,23 @@ $(function(ready){
             }
          }
          $(this).parent().data("use_image", use_image);
-         if (images_removed > 0) {
+         if (images_removed > 0) { //Oversized img notification
             if (images_removed == 1) {
                $("#img_inputs").after("<span class='message warning' id='size_warning'> Warning: 1 image above 4MB was removed.</span>");
             } else {
                $("#img_inputs").after("<span class='message warning' id='size_warning'> Warning: " + images_removed + " images above 4MB were removed.</span>");
             }
-            
          }
       };
       $(this).hide();
       addInput();
-
    });
 
    $("#img_inputs").on("click", ".img_remove", function (e) {
       //removes preview and marks image as removed
       var i = $(this).index();
       $(this).parent().data("use_image")[i] = 0;
-      console.log( $(this).parent().data("use_image") );
       $(this).hide('fast');
-
    });
 
 
