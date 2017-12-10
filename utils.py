@@ -411,9 +411,9 @@ def cache_cloud_vision_results_for_img(account, album_key, img_key, results):
     upload_text_file_to_cloudstorage(filename, str(results))
 
 def make_cloud_vision_api_call(requests):
-    """ Makes a call to the google cloud vision api with the given payload. This is used to 
+    """ Makes a call to the google cloud vision api with the given payload. This is used to
       simplify the batched vs single-image request logic in get_details_from_cloud_vision.
-      
+
       Args:
       requests: a list of requests to google cloud vision each containing an "image" key and "features" key
 
@@ -460,7 +460,7 @@ def get_details_from_cloud_vision(account, album_key, image_keys):
     # raise Exception("Random exception I'm throwing!")
 
     COMMON_LANDMARKS = ["eiffel tower", "statue of liberty", "taj mahal", "golden gate bridge"]
-    COMMON_LABELS = ["dog", "cat", "beach", "christmas", "valentine", "heart", "easter", "bunny", "bird"]
+    COMMON_LABELS = ["dog", "cat", "beach", "christmas", "valentine", "heart", "easter", "winter", "snow"]
 
     # Description of the variables below:
     # results: list of responses from cloud vision (excludes cached responses)
@@ -563,7 +563,7 @@ def get_details_from_cloud_vision(account, album_key, image_keys):
         except KeyError:
           landmark = ""
         i += 1
-      
+
       for main_color in colors:
         info = main_color[u'color']
         rgb = [info[u'red'], info[u'green'], info[u'blue']]
@@ -580,7 +580,7 @@ def get_details_from_cloud_vision(account, album_key, image_keys):
 
       if landmark.lower() in COMMON_LANDMARKS:
         stickers.append(landmark)
-      
+
       if image_key not in cached_results:
         results_to_cache = { "colors" : colors, "labels" : labels, "landmark" : landmark }
         logging.info("Image with key %s was not cached, so caching the results now... Content will be: %s" % (str(image_key), str(results_to_cache)))

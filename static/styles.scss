@@ -740,3 +740,7 @@ input[type="file"]{
 .beach:after {
    background-image: url('/static/stickers/beach.png');
 }
+
+.snow:after, .winter:after{
+   background-image: url('/static/stickers/snow.png');
+}
