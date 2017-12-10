@@ -235,47 +235,6 @@ def upload_album_images_to_cloud_storage(account, album, images):
         if status != 200:
           logging.error("Uploading image with filename " + image_name + " failed with status code " + str(status) + " Headers: " + str(headers))
 
-
-def generate_dummy_html(account, album_key, image_keys):
-  IMG_PER_PAGE = 3 # dummy value for now
-  html = ""
-  for i in xrange(0, len(image_keys), IMG_PER_PAGE):
-    page_imgs = image_keys[i:i+IMG_PER_PAGE]
-    img_tags = ""
-    (colors, stickers) = get_details_from_cloud_vision(account, album_key, page_imgs)
-
-    i = 0
-    for image in page_imgs:
-      image_url = images.get_serving_url(BlobKey(image), size=300)
-      image_filename = get_photo_filename_by_key(account, album_key, image)
-      if len(page_imgs) == 3:
-        color = str( (colors[i][0], colors [i][1], colors[i][2]))
-      elif len(page_imgs) == 2:
-        color = str( (colors[i*2][0], colors [i*2][1], colors[i*2][2]))
-      logging.info("Got color for image: " + color)
-      img_tags += """<img src='%s' style='background-color: rgb%s'/>""" % (image_url, color)
-      i += 1
-
-    rgb_sum = sum(colors[3])
-    if rgb_sum > (128 * 3):
-      border = "black"
-    else:
-      border = "white"
-    color = str( (colors[3][0], colors [3][1], colors[3][2]))
-
-    if stickers:
-      random_sticker = random.choice(stickers)
-    else:
-      random_sticker = ""
-    logging.info("Random sticker chosen: " + random_sticker)
-    html += """<div class='page'><div class='album_square'>
-               <div class='container %s %s' style='background-color: rgb%s'>
-                 %s
-               </div></div></div>""" % (border, random_sticker, color, img_tags)
-
-  return html
-
-
 def generate_html(album_key, pages, ratios):
   """ Generates the HTML for the album with the given key and images.
 
@@ -626,21 +585,61 @@ def get_details_from_cloud_vision(account, album_key, image_keys):
     return (corrected_palette, stickers)
 
 def send_album_email(name, email, album_key):
-    logging.info("sending mail!")
     album = get_album_by_key(album_key)
     title = album.title
     url = "lazycloudalbum.appspot.com/view/%s" % (album_key)
-    mail.send_mail(
-        sender="noreply@lazycloudalbum.appspotmail.com",
-        subject= "%s has been built!" %(title),
-        to = email,
-        body = """
-        Hey %s,
 
-        We've finished putting together your '%s' album.
-        <a href = '%s'> Check it out! </a>
-        """ % (name, title, url)
-         )
+    mail.EmailMessage(
+            sender="noreply@lazycloudalbum.appspotmail.com",
+            subject= "%s has been built!" %(title),
+            to = "<%s>" % email,
+            body = """
+            Hey %s,
+
+            We've finished putting together your '%s' album.
+
+            Check it out here : %s
+            """ % (name, title, url) ,
+            html = """ <html><head></head><body>
+            Hey %s,
+            <br/>
+            <br/>
+            We've finished putting together your '%s' album.
+            <br/>
+            <br/>
+            <a href = '%s'> Check it out! </a>
+            </body>
+            </html>
+            """ % (name, title, url)
+            ).Send()
+
+def send_failure_email(name, email, title):
+    mail.EmailMessage(
+            sender="noreply@lazycloudalbum.appspotmail.com",
+            subject= "%s failed to build." %(title),
+            to = "<%s>" % email,
+            body = """
+            Hey %s,
+
+            Something went wrong while we were putting together %s and we're unable to finish building it.
+
+            It has been automatically deleted and will not show up in your albums.
+
+            If this problem persists, please contact us!
+            """ % (name, title) ,
+            html = """ <html><head></head><body>
+            Hey %s,
+            <br/>
+            <br/>
+            Something went wrong while we were putting together %s and we're unable to finish building it.
+            <br/>
+            It has been automatically deleted and will not show up in your albums.
+            <br/>
+            If this problem persists, please contact us!
+            </body>
+            </html>
+            """ % (name, title)
+            ).Send()
 
 def desaturate(color):
     new_color = color

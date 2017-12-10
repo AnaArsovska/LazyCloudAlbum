@@ -17,7 +17,6 @@ class Construct(webapp2.RequestHandler):
         album_key = self.request.get("album")
         album = utils.get_album_by_key(album_key)
         user = album.key.parent().get()
-
         # max tries we want to allow is 5
         if retry_count >= 3:
             # Deletes album. Parent checks aren't needed (I think) because the delete request is coming from
@@ -29,10 +28,10 @@ class Construct(webapp2.RequestHandler):
                params={'album': album_key},
                target = 'worker')
 
-            # TODO: Need to send email about the album failing to build
+            utils.send_failure_email(self.request.get("name"), self.request.get("email"), album.title)
             logging.error("FAILED TO BUILD ALBUM WITH NAME: " + album.title + ". ORDINARILY AN EMAIL WOULD BE SENT HERE")
             return
-        
+
         ratio = {}
         shape = {}
         imgs = album.images
@@ -85,10 +84,8 @@ class Construct(webapp2.RequestHandler):
         album.ready = True
         album.put()
 
-        try:
-            utils.send_album_email(self.request.get("name"), self.request.get("email"), "Album")
-        except:
-            pass
+        utils.send_album_email(self.request.get("name"), self.request.get("email"), album_key)
+
         logging.info("Marked album as ready!")
 
 class Delete(webapp2.RequestHandler):
