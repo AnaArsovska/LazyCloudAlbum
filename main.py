@@ -105,5 +105,4 @@ application = webapp2.WSGIApplication([
                                        (r'/create', CreatePage),
                                        (r'/view/(.*)', ViewPage),
                                        (r'/contact', ContactPage),
-                                       (r'/test', test),
                                        (r'/', MainPage)], debug=True)

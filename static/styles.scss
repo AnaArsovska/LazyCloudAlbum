@@ -728,3 +728,15 @@ input[type="file"]{
 .golden:after {
    background-image: url('/static/stickers/golden_gate.png');
 }
+
+.christmas:after {
+   background-image: url('/static/stickers/Christmas.png');
+}
+
+.valentine:after, .heart:after {
+   background-image: url('/static/stickers/valentine.png');
+}
+
+.beach:after {
+   background-image: url('/static/stickers/beach.png');
+}

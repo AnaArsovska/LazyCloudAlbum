@@ -19,7 +19,8 @@ template_env = jinja2.Environment(
 class BuildHandler(blobstore_handlers.BlobstoreUploadHandler):
     @ndb.transactional
     def post(self):
-        """ Build Handler constructs album based on uploaded pictures """
+        """ Build Handler puts album in the datastore then adds album to task queue to be generated.
+        """
         logging.info("html from request: " + str(self.request.get('html')).strip())
         title = str(self.request.get('title')).strip()
         account = utils.get_account()
