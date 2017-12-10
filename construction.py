@@ -28,7 +28,10 @@ class Construct(webapp2.RequestHandler):
                params={'album': album_key},
                target = 'worker')
 
-            utils.send_failure_email(self.request.get("name"), self.request.get("email"), album.title)
+            try :
+                utils.send_failure_email(self.request.get("name"), self.request.get("email"), album.title)
+            except :
+                logging.info("Email failed")
             logging.error("FAILED TO BUILD ALBUM WITH NAME: " + album.title + ". ORDINARILY AN EMAIL WOULD BE SENT HERE")
             return
 
@@ -84,8 +87,10 @@ class Construct(webapp2.RequestHandler):
         album.ready = True
         album.put()
 
-        utils.send_album_email(self.request.get("name"), self.request.get("email"), album_key)
-
+        try :
+            utils.send_album_email(self.request.get("name"), self.request.get("email"), album_key)
+        except :
+            logging.info("Email failed")
         logging.info("Marked album as ready!")
 
 class Delete(webapp2.RequestHandler):
