@@ -19,7 +19,7 @@ class Construct(webapp2.RequestHandler):
         user = album.key.parent().get()
 
         # max tries we want to allow is 5
-        if retry_count >= 5:
+        if retry_count >= 3:
             # Deletes album. Parent checks aren't needed (I think) because the delete request is coming from
             # us, not from the user
             album.hidden = True
@@ -76,20 +76,15 @@ class Construct(webapp2.RequestHandler):
             pages.append( ["1"] + [imgs[cursor]] )
             cursor += 1
 
-        account = album.key.parent().get()
-        # t = threading.Thread(target=Construct.generate_html_helper, args=(album.key, account, pages, ratio))
-        # logging.info("Task queue item: going to start the thread now...")
-        # t.start()
-        # logging.info("Task queue item: Done starting thread, going to exit now")
         logging.info("Going to generate the html now...")
         html = utils.generate_html(album.key, pages, ratio)
-        logging.info("Done generating html! Saving html file now for user %s and album %s..." % (account.user_id, album_key))
-        filename = utils.get_html_filename(account, album.key.urlsafe())
+        logging.info("Done generating html! Saving html file now for user %s and album %s..." % (user.user_id, album_key))
+        filename = utils.get_html_filename(user, album.key.urlsafe())
         utils.upload_text_file_to_cloudstorage(filename, html)
         logging.info("Done saving html file! Marking album as ready now...")
         album.ready = True
         album.put()
-        
+
         try:
             utils.send_album_email(self.request.get("name"), self.request.get("email"), "Album")
         except:
@@ -101,6 +96,7 @@ class Delete(webapp2.RequestHandler):
     def post(self):
         album_key = self.request.get("album")
         album = utils.get_album_by_key(album_key)
+        logging.info("Deleting album with key %s" % (album.key.urlsafe()))
         utils.clear_album_data(album)
         album.key.delete()
 

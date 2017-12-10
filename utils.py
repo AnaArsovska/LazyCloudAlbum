@@ -9,6 +9,7 @@ import base64
 import logging
 import yaml
 import random
+import ast
 
 from google.appengine.ext import vendor
 vendor.add('lib')
@@ -18,6 +19,10 @@ BUCKET_NAME = "lazy_cloud_album_test"
 UPLOAD_BASE_URL_CS = "https://www.googleapis.com/upload/storage/v1/b/" + BUCKET_NAME + "/o?uploadType=media&name="
 DELETE_BASE_URL_CS = "https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/"
 GET_BASE_URL_CS = "https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/"
+
+# Used to disable calls to vision api for  Label and Landmark info
+# NOTE: DOES NOT DO ANYTHING YET
+MINIMIZE_BILLING = True
 
 def getContext(page):
     """ Gathers necessary information to populate pages
@@ -108,6 +113,10 @@ def get_html_filename(account, album_key):
 def get_photo_filename(account, album_key, photo):
     return get_photo_filename_by_key(account, album_key, photo.key())
 
+def get_vision_cache_filename(account, album_key, photo_key):
+    photos_filename = get_photo_filename_by_key(account, album_key, photo_key)
+    return photos_filename.replace("photos", "vision_results")
+
 def get_photo_filename_by_key(account, album_key, photo_key):
     return account.user_id + "/" + str(album_key) + "/photos/" + str(photo_key)
 
@@ -124,35 +133,65 @@ def clear_album_data(album):
 
         cloudstorage_filename = get_photo_filename_by_key(album.key.parent().get(), album.key.urlsafe(), image_key)
         cloudstorage_filename = cloudstorage_filename.replace("/","%2f")
-
         storage_api.do_request(DELETE_BASE_URL_CS + cloudstorage_filename,
                                'DELETE')
 
-        cloudstorage_filename = get_html_filename(album.key.parent().get(), album.key.urlsafe())
+        cloudstorage_filename = get_vision_cache_filename(album.key.parent().get(), album.key.urlsafe(), image_key)
         cloudstorage_filename = cloudstorage_filename.replace("/","%2f")
         storage_api.do_request(DELETE_BASE_URL_CS + cloudstorage_filename,
                                'DELETE')
 
+    cloudstorage_filename = get_html_filename(album.key.parent().get(), album.key.urlsafe())
+    cloudstorage_filename = cloudstorage_filename.replace("/","%2f")
+    storage_api.do_request(DELETE_BASE_URL_CS + cloudstorage_filename,
+                           'DELETE')
+
 def get_html_from_cloud_storage(account, album_key):
-    """ Uploads a text file with the given name and contents to Cloud Storage.
+    """ Reads the html file for a given account and album from Cloud Storage.
 
         Args:
           account: an Account entity
           album_key: urlsafe version of the entity key for the Album
 
-        Logs an error if no HTML file could be found.
+        Returns:
+        The tuple (success, content) where success is a bool representing whether the file was found
+        and content is the contents of the html file
+
+        """
+    # storage_api = cloudstorage.storage_api._get_storage_api(None)
+    file_name = get_html_filename(account, album_key)
+    # file_name = file_name.replace("/", "%2f")
+    # (status, headers, content) = storage_api.do_request(GET_BASE_URL_CS + file_name + "?alt=media",'GET')
+
+    # if status == 200:
+    #     return (True, content)
+    # else:
+    #     return (False, "Error: No HTML found for the given user")
+    (success, content) = get_file_from_cloud_storage(file_name)
+    if not success:
+      content = "Error: No HTML found for the given user"
+
+    return (success, content)
+
+def get_file_from_cloud_storage(file_name):
+    """ Reads a file with the given filename from Cloud Storage.
+
+        Args:
+          file_name: The path to the file on cloud storage. Does not need to be URI safe
+
+        Returns:
+        The tuple (success, content) where success is a bool representing whether the file was found
+        and content is the contents of the file
 
         """
     storage_api = cloudstorage.storage_api._get_storage_api(None)
-    file_name = get_html_filename(account, album_key)
     file_name = file_name.replace("/", "%2f")
     (status, headers, content) = storage_api.do_request(GET_BASE_URL_CS + file_name + "?alt=media",'GET')
 
-    # Returns (success, response)
     if status == 200:
         return (True, content)
     else:
-        return (False, "Error: No HTML found for the given user")
+        return (False, None)
 
 def upload_text_file_to_cloudstorage(filename, contents):
     """ Uploads a text file with the given name and contents to Cloud Storage.
@@ -171,7 +210,7 @@ def upload_text_file_to_cloudstorage(filename, contents):
     if status == 200:
       logging.info("Uploading html with filename " + filename + " succeeded")
     else:
-      logging.error("Uploading html with filename " + filename + " failed with status code " + status + ". Headers: " + headers)
+      logging.error("Uploading html with filename " + filename + " failed with status code " + str(status) + ". Headers: " + str(headers))
 
 
 
@@ -203,7 +242,7 @@ def generate_dummy_html(account, album_key, image_keys):
   for i in xrange(0, len(image_keys), IMG_PER_PAGE):
     page_imgs = image_keys[i:i+IMG_PER_PAGE]
     img_tags = ""
-    (colors, stickers) = get_details_from_cloud_vision(page_imgs)
+    (colors, stickers) = get_details_from_cloud_vision(account, album_key, page_imgs)
 
     i = 0
     for image in page_imgs:
@@ -238,7 +277,18 @@ def generate_dummy_html(account, album_key, image_keys):
 
 
 def generate_html(album_key, pages, ratios):
+  """ Generates the HTML for the album with the given key and images.
+
+    Args:
+    album_key: an Album entity key (NOT urlsafe)
+    pages: an list of pages of the form page type (eg: 1, or 3b) followed by the keys of the images for that page
+    ratios: a dict mapping image key to the image's apect ratio
+
+    Returns:
+    A string representing the html for that album
+  """
   html = ""
+  account = album_key.parent().get()
   image_keys = album_key.get().images
   letters = ["a", "b", "c"]
   patterns = ["dots", "diamonds", "stripes", "circles", "waves", "vStripes", "argyle"]
@@ -246,7 +296,7 @@ def generate_html(album_key, pages, ratios):
   for page in pages:
     page_imgs = page[1:]
 
-    (palette, stickers) = get_details_from_cloud_vision(page_imgs)
+    (palette, stickers) = get_details_from_cloud_vision(account, album_key.urlsafe(), page_imgs)
 
     div_class = "%s %s" % (page[0], random.choice(patterns))
     if stickers:
@@ -322,6 +372,44 @@ def generate_html(album_key, pages, ratios):
 
   return html
 
+def check_cloud_vision_cache_for_img(account, album_key, img_key):
+    """ Checks cloud storage to see if there is a cloud vision response cached for the given image.
+
+      Args:
+      account: an Account entity
+      album_key: the url safe version of an Album entity key
+      img_key: a blob key
+
+      Returns:
+      The tuple (found, data). If a response was cached, then found is true. If no response was found,
+      found is false and data is empty. Data is the string representation of a dictionary with keys:
+        colors: top num_colors (see get_details_from_cloud_vision()) for the image based on score
+        labels: top 5 labels for the image based on score
+        landmark: top landmark name
+      """
+    filename = get_vision_cache_filename(account, album_key, img_key)
+    (found, data) = get_file_from_cloud_storage(filename)
+    logging.info("Data before reformatting: " + str(data))
+    if found:
+      #data = data.replace("'", "\"")
+      data = ast.literal_eval(data)
+
+    logging.info("Data is: " + str(data))
+    return (found, data)
+
+def cache_cloud_vision_results_for_img(account, album_key, img_key, results):
+    """ Saves the already-parsed/processed results from cloud vision to cloud storage to avoid
+        repeating cloud vision calls unnecessarily.
+
+      Args:
+      account: an Account entity
+      album_key: the url safe version of an Album entity key
+      img_key: a blob key
+      results: a map containing colors, labels, and landmark information
+    """
+    filename = get_vision_cache_filename(account, album_key, img_key)
+    upload_text_file_to_cloudstorage(filename, str(results))
+
 def make_cloud_vision_api_call(requests):
     """ Makes a call to the google cloud vision api with the given payload. This is used to 
       simplify the batched vs single-image request logic in get_details_from_cloud_vision.
@@ -348,14 +436,18 @@ def make_cloud_vision_api_call(requests):
                      )
     results = loads(response.content)
     #logging.info("Str representation of what I'm returning: " + str(results[u'responses']))
+    logging.info("Results to return from make_cloud_vision_api_call: %s" % (str(results)))
     return results[u'responses']
 
 
-def get_details_from_cloud_vision(image_keys):
+def get_details_from_cloud_vision(account, album_key, image_keys):
     """ Gets color, landmark, and label information for a page of images.
 
     Args:
+    account: an Account entity
+    album_key: the url_safe version of an Album key
     image_keys: A list of image blob keys
+
     Returns:
     The tuple (palette, stickers) where palette is a list of colors of the form:
     [ [r, g, b], [r, g, b] ... ]
@@ -370,10 +462,26 @@ def get_details_from_cloud_vision(image_keys):
     COMMON_LANDMARKS = ["eiffel tower", "statue of liberty", "taj mahal", "golden gate bridge"]
     COMMON_LABELS = ["dog", "cat", "beach", "christmas", "valentine", "heart", "easter", "bunny", "bird"]
 
-    requests = []
+    # Description of the variables below:
+    # results: list of responses from cloud vision (excludes cached responses)
+    # cached_results: dict of image_keys to cached colors, labels, and landmark information for the image
+    # requests: list of requests to send in the current payload
+    # current_payload_img_size: size in bytes of the images currently in requests. These images will
+    #     be sent as one request to cloud vision. The total payload size (images plus other request info)
+    #     cannot exceed 8MB
     results = []
+    cached_results = {}
+    requests = []
     current_payload_img_size = 0
+
     for image_key in image_keys:
+      (cached, cached_result) = check_cloud_vision_cache_for_img(account, album_key, image_key)
+      if cached:
+        logging.info("Image with key %s had a cached result. Result was: %s" % (str(image_key), str(cached_result)))
+        cached_results[image_key] = cached_result
+        continue
+
+      logging.info("Image with key %s did not have a cached result. Going to call Vision API" % (str(image_key)))
       data = blobstore.BlobReader(image_key).read()
       img_size = len(data)
       logging.info("Current image size: %d. Payload size so far: %d" % (img_size, current_payload_img_size))
@@ -413,7 +521,7 @@ def get_details_from_cloud_vision(image_keys):
     if requests:
         results.extend(make_cloud_vision_api_call(requests))
 
-    logging.info("Str representation of the final aggregated results: " + str(results))
+    logging.info("Str representation of the final aggregated results: %s. Cached results: %s" % (str(results), str(cached_results)))
 
     rgb_colors = []
     reds = []
@@ -421,17 +529,42 @@ def get_details_from_cloud_vision(image_keys):
     blues = []
     stickers = []
 
-    for i in xrange(0, len(image_keys)):
-      colors = results[i][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
-      if len(image_keys) == 1:
-        num_colors = 3
-      elif len(image_keys) == 2:
-        num_colors = 2
+    # i is the current index into the results array (responses from cloud vision, not cached)
+    i = 0
+    for image_key in image_keys:
+      if image_key in cached_results:
+        colors = cached_results[image_key]["colors"]
+        labels = cached_results[image_key]["labels"]
+        landmark = cached_results[image_key]["landmark"]
       else:
-        num_colors = 1
+        try:
+          if len(image_keys) == 1:
+            num_colors = 3
+          elif len(image_keys) == 2:
+            num_colors = 2
+          else:
+            num_colors = 1
+          colors = results[i][u'imagePropertiesAnnotation'][u'dominantColors'][u'colors']
+          colors = sorted(colors, key = lambda color : 0 * color[u'pixelFraction'] + color[u'score'] , reverse = True)[0:num_colors]
+        except KeyError:
+          colors = []
 
-      main_colors = sorted(colors, key = lambda color : 0*color[u'pixelFraction'] + 1*color[u'score'] , reverse = True)[0:num_colors]
-      for main_color in main_colors:
+        try:
+          labels = results[i][u'labelAnnotations']
+          labels = sorted(labels, key = lambda annotation : annotation[u'score'] , reverse = True)[0:5]
+          labels = [label[u'description'] for label in labels]
+        except KeyError:
+          labels = []
+
+        try:
+          landmark = results[i][u'landmarkAnnotations']
+          landmark = sorted(landmark, key = lambda annotation : annotation[u'score'] , reverse = True)[0]
+          landmark = landmark[u'description']
+        except KeyError:
+          landmark = ""
+        i += 1
+      
+      for main_color in colors:
         info = main_color[u'color']
         rgb = [info[u'red'], info[u'green'], info[u'blue']]
         reds.append(rgb[0])
@@ -441,21 +574,17 @@ def get_details_from_cloud_vision(image_keys):
 
       logging.info("Length of stickers so far: " + str(len(stickers)))
 
-      labels = results[i][u'labelAnnotations']
-      labels = sorted(labels, key = lambda annotation : annotation[u'score'] , reverse = True)[0:5]
       for label in labels:
-        label = label[u'description']
         if label in COMMON_LABELS:
           stickers.append(label)
 
-      try:
-        landmark = results[i][u'landmarkAnnotations']
-        landmark = sorted(landmark, key = lambda annotation : annotation[u'score'] , reverse = True)[0]
-        landmark_name = landmark[u'description']
-        if landmark_name.lower() in COMMON_LANDMARKS:
-          stickers.append(landmark_name)
-      except KeyError:
-        pass
+      if landmark.lower() in COMMON_LANDMARKS:
+        stickers.append(landmark)
+      
+      if image_key not in cached_results:
+        results_to_cache = { "colors" : colors, "labels" : labels, "landmark" : landmark }
+        logging.info("Image with key %s was not cached, so caching the results now... Content will be: %s" % (str(image_key), str(results_to_cache)))
+        cache_cloud_vision_results_for_img(account, album_key, image_key, results_to_cache)
 
     logging.info("Stickers: " + str(stickers))
 
