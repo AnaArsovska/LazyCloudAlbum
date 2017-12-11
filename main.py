@@ -60,6 +60,13 @@ class CreatePage(webapp2.RequestHandler):
         logging.info("upload url: %s", upload_url)
         self.response.out.write(template.render(context, upload_url=upload_url))
 
+class ErrorPage(webapp2.RequestHandler):
+    def get(self):
+        """ Loads error page """
+        context = utils.getContext(self)
+        template = template_env.get_template('album_create_error.html.j2')
+        self.response.out.write(template.render(context))
+
 class ViewPage(webapp2.RequestHandler):
     def get(self, album_key):
         """ Views album specified by URL
@@ -103,6 +110,7 @@ application = webapp2.WSGIApplication([
                                        (r'/about', AboutPage),
                                        (r'/how_to', HowToPage),
                                        (r'/create', CreatePage),
+                                       (r'/error', ErrorPage),
                                        (r'/view/(.*)', ViewPage),
                                        (r'/contact', ContactPage),
                                        (r'/', MainPage)], debug=True)

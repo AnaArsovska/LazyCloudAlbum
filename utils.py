@@ -15,7 +15,10 @@ from google.appengine.ext import vendor
 vendor.add('lib')
 import cloudstorage
 
-BUCKET_NAME = "lazy_cloud_album_test"
+with open("config.yaml", 'r') as stream:
+  config = yaml.load(stream)
+  BUCKET_NAME = config["BUCKET_NAME"]
+
 UPLOAD_BASE_URL_CS = "https://www.googleapis.com/upload/storage/v1/b/" + BUCKET_NAME + "/o?uploadType=media&name="
 DELETE_BASE_URL_CS = "https://www.googleapis.com/storage/v1/b/" + BUCKET_NAME + "/o/"
 GET_BASE_URL_CS = "https://www.googleapis.com/storage/v1/b/" + BUCKET_NAME + "/o/"
