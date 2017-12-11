@@ -112,9 +112,26 @@ class EditHandler(webapp2.RequestHandler):
         album.put()
         self.redirect('/')
 
+class AlbumReadyHandler(webapp2.RequestHandler):
+    def post(self, album_key):
+        """Checks if a given album is ready. Sends response 200 if it is, and 204 if not.
+
+        Args:
+            album_key: URL safe version of the album key
+
+        """
+        album = utils.get_album_by_key(album_key)
+        if album.ready:
+            logging.info("Album with id %s is ready!" % (album_key))
+            self.response.set_status(200)
+        else:
+            logging.info("Album with id %s is not ready yet" % (album_key))
+            self.response.set_status(204)
+
 application = webapp2.WSGIApplication([
     (r'/edit/build', BuildHandler),
     (r'/edit/error', ErrorPage),
     (r'/edit/delete/(.*)', DeleteHandler),
+    (r'/edit/ready/(.*)', AlbumReadyHandler),
     (r'/edit/(.*)', EditHandler)
     ], debug=True)

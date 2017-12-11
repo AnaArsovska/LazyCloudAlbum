@@ -1,5 +1,34 @@
 {% extends 'base.html.j2' %}
 
+{% block head %}
+
+<script>
+$(function(ready){
+   function check_if_albums_ready() {
+      var not_ready = $(".not_ready");
+      not_ready.each(function() {
+         var xhr = new XMLHttpRequest();
+         xhr.open('POST', $(this).attr("checkready"));
+         xhr.onload = function () {
+            if (xhr.status == 200) {
+               location.reload();
+            }
+         };
+         xhr.send();
+      });
+
+      if (not_ready.length > 0) {
+         setTimeout(check_if_albums_ready, 3000);
+      }
+   }
+   check_if_albums_ready();
+   
+});
+
+</script>
+
+{% endblock %}
+
 {% block content %}
    <h2 id = "sec1">Your Albums </h2>
    <ul>
@@ -9,7 +38,7 @@
          </a>
       </li>
       {% for album in albums%}
-         <li {%if not album.ready %} class="not_ready" {% endif %}>
+         <li {%if not album.ready %} class="not_ready" checkready="/edit/ready/{{album.key.urlsafe()}}" {% endif %}>
             <a {%if album.ready%} href="/view/{{album.key.urlsafe()}}" {% endif %}>
                <div class = "thumbnail"
                   {% if album.ready %}

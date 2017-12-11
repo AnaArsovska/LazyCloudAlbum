@@ -17,12 +17,11 @@ import cloudstorage
 
 BUCKET_NAME = "lazy_cloud_album_test"
 UPLOAD_BASE_URL_CS = "https://www.googleapis.com/upload/storage/v1/b/" + BUCKET_NAME + "/o?uploadType=media&name="
-DELETE_BASE_URL_CS = "https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/"
-GET_BASE_URL_CS = "https://www.googleapis.com/storage/v1/b/lazy_cloud_album_test/o/"
+DELETE_BASE_URL_CS = "https://www.googleapis.com/storage/v1/b/" + BUCKET_NAME + "/o/"
+GET_BASE_URL_CS = "https://www.googleapis.com/storage/v1/b/" + BUCKET_NAME + "/o/"
 
-# Used to disable calls to vision api for  Label and Landmark info
-# NOTE: DOES NOT DO ANYTHING YET
-MINIMIZE_BILLING = True
+# Used to disable calls to vision api when testing non-vision related features
+MINIMIZE_BILLING = False
 
 def getContext(page):
     """ Gathers necessary information to populate pages
@@ -255,8 +254,13 @@ def generate_html(album_key, pages, ratios):
   for page in pages:
     page_imgs = page[1:]
 
-    (palette, stickers) = get_details_from_cloud_vision(account, album_key.urlsafe(), page_imgs)
-
+    # Sets palette to gray if we're minimizing calls to Cloud Vision
+    if MINIMIZE_BILLING:
+      palette = [[128, 128, 128], [128, 128, 128], [128, 128, 128], [128, 128, 128]]
+      stickers = []
+    else:
+      (palette, stickers) = get_details_from_cloud_vision(account, album_key.urlsafe(), page_imgs)
+    
     div_class = "%s %s" % (page[0], random.choice(patterns))
     if stickers:
         # Picks a random sticker from those found

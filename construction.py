@@ -9,6 +9,8 @@ from google.appengine.ext.blobstore import BlobKey
 from google.appengine.api.taskqueue import taskqueue
 from PIL import Image
 
+import time
+
 class Construct(webapp2.RequestHandler):
     def post(self):
         retry_count = int(self.request.headers.get("X-AppEngine-TaskRetryCount"))
@@ -84,6 +86,7 @@ class Construct(webapp2.RequestHandler):
         filename = utils.get_html_filename(user, album.key.urlsafe())
         utils.upload_text_file_to_cloudstorage(filename, html)
         logging.info("Done saving html file! Marking album as ready now...")
+
         album.ready = True
         album.put()
 
