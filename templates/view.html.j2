@@ -3,29 +3,22 @@
 {% block content %}
 {% if user and album.key.parent().get().user_id == user.user_id() %}
 <div id = "sec1">
-<form class = "edit" action="/edit/{{album.key.urlsafe()}}" method="post">
+<form class = "edit" action="/edit/{{album.key.urlsafe()}}" method="post" id ="save_form">
    <input name="title" id="title" type="text" class="edit"
    value='{{album.title}}'>
    <input type="checkbox" name= "public" id="public" {%if album.public%} checked {%endif%}>
    <label for="public">Public</label>
-   <button type="submit"> Save </button>
 </form>
 
-
-<button id = "delete" formaction="/edit/delete/{{album.key.urlsafe()}}"> <span> Delete <i class="fa fa-trash-o" aria-hidden="true"></i> </span></button>
-<button id = 'GeneratePDF'> PDF </button>
-<div class="fb-share-button"
-    data-href="/view/{{album.key.urlsafe()}}"
-    data-layout="button_count">
+<div style = "display: flex; justify-content: space-between;">
+   <button form="save_form" id= "save" class="minibutton" type="submit"> Save <i class="fa fa-floppy-o" aria-hidden="true"></i> </button>
+   <button class = "minibutton" id = "delete" formaction="/edit/delete/{{album.key.urlsafe()}}"> <span> Delete <i class="fa fa-trash-o" aria-hidden="true"></i> </span></button>
 </div>
+
 </div>
 {% else %}
 <h2 id = "sec1"> {{album.title}}</h2>
 {% endif %}
-
-<a id= "sec2" href="#" onclick="return xepOnline.Formatter.Format('album',{render:'download', filename:'Your Lazy Album'});">
-   PDF
-</a>
 
 <div class = "arrow left"><i class="fa fa-chevron-left"></i> </div>
 
@@ -33,6 +26,14 @@
    {{saved_html}}
 </div>
 <div class = "arrow right"><i class="fa fa-chevron-right"></i> </div>
+
+<div id = "share">
+   <button class = "minibutton" id = 'GeneratePDF'> PDF <i class="fa fa-download" aria-hidden="true"></i> </button>
+   <div class="fb-share-button"
+       data-href="/view/{{album.key.urlsafe()}}"
+       data-layout="button_count">
+   </div>
+</div>
 
 <script type="text/javascript">
 
