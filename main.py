@@ -60,13 +60,6 @@ class CreatePage(webapp2.RequestHandler):
         logging.info("upload url: %s", upload_url)
         self.response.out.write(template.render(context, upload_url=upload_url))
 
-class ErrorPage(webapp2.RequestHandler):
-    def get(self):
-        """ Loads error page """
-        context = utils.getContext(self)
-        template = template_env.get_template('album_create_error.html.j2')
-        self.response.out.write(template.render(context))
-
 class ViewPage(webapp2.RequestHandler):
     def get(self, album_key):
         """ Views album specified by URL
@@ -76,6 +69,7 @@ class ViewPage(webapp2.RequestHandler):
 
             """
         context = utils.getContext(self)
+
         album = utils.get_album_by_key(album_key)
         if album:
             # Show album only if it is public or the current user is the owner
@@ -90,6 +84,7 @@ class ViewPage(webapp2.RequestHandler):
                 # get_html_from_cloud_storage returns the tuple (success, content). We ignore the first value and just take
                 # the content since it returns an error message for "content" if it did not succeed
                 (_, context['saved_html']) = utils.get_html_from_cloud_storage(album.key.parent().get(), album.key.urlsafe())
+                context['urlsafe_html'] = context['saved_html'].replace("\"", "'").replace('\n', '').replace('\r', '')
                 template = template_env.get_template('view.html.j2')
             else:
                 #Private album
@@ -110,7 +105,7 @@ application = webapp2.WSGIApplication([
                                        (r'/about', AboutPage),
                                        (r'/how_to', HowToPage),
                                        (r'/create', CreatePage),
-                                       (r'/error', ErrorPage),
                                        (r'/view/(.*)', ViewPage),
                                        (r'/contact', ContactPage),
+                                       (r'/test', test),
                                        (r'/', MainPage)], debug=True)

@@ -1,0 +1,130 @@
+{% extends 'base.html.j2' %}
+
+{% block content %}
+{% if user and album.key.parent().get().user_id == user.user_id() %}
+<div id = "sec1">
+<form class = "edit" action="/edit/{{album.key.urlsafe()}}" method="post">
+   <input name="title" id="title" type="text" class="edit"
+   value='{{album.title}}'>
+   <input type="checkbox" name= "public" id="public" {%if album.public%} checked {%endif%}>
+   <label for="public">Public</label>
+   <button type="submit"> Save </button>
+</form>
+
+<button id = "delete" formaction="/edit/delete/{{album.key.urlsafe()}}" > <span> Delete <i class="fa fa-trash-o" aria-hidden="true"></i> </span></button>
+<button id = 'GeneratePDF'> PDF </button>
+<div class="fb-share-button"
+    data-href="/view/{{album.key.urlsafe()}}"
+    data-layout="button_count">
+</div>
+</div>
+{% else %}
+<h2 id = "sec1"> {{album.title}}</h2>
+{% endif %}
+
+<a id= "sec2" href="#" onclick="return xepOnline.Formatter.Format('album',{render:'download', filename:'Your Lazy Album'});">
+   PDF
+</a>
+
+<div class = "arrow left"><i class="fa fa-chevron-left"></i> </div>
+
+<div id = "album">
+   {{saved_html}}
+</div>
+<div class = "arrow right"><i class="fa fa-chevron-right"></i> </div>
+
+<script type="text/javascript">
+
+function getPagesHTML(view_num) {
+   if (typeof getPagesHTML.image_urls == 'undefined') {
+      getPagesHTML.image_urls = {{ images|safe }};
+   }
+}
+
+
+function updateAlbum(dir) {
+   // Declares view_num and num_images as "static" variables
+   if (typeof updateAlbum.view_num == 'undefined') {
+      updateAlbum.view_num = 0;
+      updateAlbum.pages = $(".page").length - 2; //Account for pages on screen
+   }
+   if (dir & updateAlbum.view_num < updateAlbum.pages){
+      updateAlbum.view_num += 2;
+   } else if (!dir & updateAlbum.view_num > 0) {
+      updateAlbum.view_num -= 2;
+   }
+
+   if (updateAlbum.view_num == updateAlbum.pages || updateAlbum.view_num == updateAlbum.pages + 1){
+      console.log("REMOVE");
+      $(".right").addClass("disabled");
+   } else {
+      $(".right").removeClass("disabled");
+   };
+   if (updateAlbum.view_num == 0) {
+      $(".left").addClass("disabled");
+   } else {
+      $(".left").removeClass("disabled");
+   };
+
+   $(".page").animate({"left": -50*updateAlbum.view_num + "%"}, "slow", "swing");
+}
+
+$(".arrow").click( function(){
+   if ($(this).hasClass("right")){
+      updateAlbum(true); //move all pages left
+   } else {
+      updateAlbum(false); //move all pages right
+   }
+});
+
+$("#delete").click( function(){
+   console.log("delete");
+   var xhr = new XMLHttpRequest();
+   xhr.open('POST', $(this).attr("formaction"));
+   xhr.onload = function () {
+      $(".message").fadeOut("slow");
+      $("#content").append(`<span class='message redirect'><h2>
+                              <i class ='fa fa-trash-o' aria-hidden='hidden'></i>
+                              </br>
+                              All cleared out! </h2>
+                              <br/><br/>
+                              <a href = '/'> Redirecting you back to gallery...</a> </span>`);
+      $(".redirect").hide().delay(600).fadeIn("slow");
+      setTimeout(function(){ window.location.href = "/"; }, 5000);
+   };
+   xhr.send();
+   $("#content").children().fadeOut("slow");
+   $("#content").append(`<span class='message'><h2>
+                           <i class="fa fa-spinner fa-spin"></i>
+                           </br>
+                           Deleting </h2>`);
+});
+$(function(ready){
+   updateAlbum(false);
+});
+
+$("#GeneratePDF").click( function(){
+
+    var oReq = new XMLHttpRequest();
+    var form = new FormData();
+    var html = "{{ urlsafe_html|safe }}";
+
+    form.append("document_html", html);
+    form.append("inline" , 1);
+    oReq.open('POST', "http://api.pdflayer.com/api/convert?access_key=741416c38593bda1c071c6735cf2b9cf", true);
+    oReq.onload = function (){
+        console.log(oReq.response);
+    };
+
+    oReq.send(form);
+});
+
+function printAlbum(param0){
+    return xepOnline.Formatter.Format(param0,{render:'download', filename:'Your Lazy Album'});
+}
+
+
+</script>
+
+
+{% endblock %}
