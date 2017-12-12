@@ -103,11 +103,31 @@ $(function(ready){
 });
 
 $("#GeneratePDF").click( function(){
-    var pageID = [];
-    $(".page").each( function(){
-        pageID.push($(this).attr('id'));
-                    });
-    printAlbum(pageID);
+    // var pageID = [];
+    // $(".page").each( function(){
+    //     pageID.push($(this).attr('id'));
+    //                 });
+    // printAlbum(pageID);
+    var oReq = new XMLHttpRequest();
+    var form = new FormData();
+    var html = "{{ urlsafe_html|safe }}";
+
+    form.append("document_html", html);
+    form.append("document_name", "album.pdf");
+    form.append("inline" , 1);
+    oReq.open('POST', "http://api.pdflayer.com/api/convert?access_key=14eeb87a6a160373768e24f048e3aa6e", true);
+    oReq.responseType = 'blob';
+    oReq.onload = function (){
+        var link = document.createElement('a');
+        link.download = 'your_lazy_album.pdf';
+        var blob = new Blob([oReq.response], {type: 'application/pdf'});
+        var url = window.URL.createObjectURL(blob);
+        
+        link.href = window.URL.createObjectURL(blob);
+        link.click();
+    };
+
+    oReq.send(form);
 });
 
 function printAlbum(param0){

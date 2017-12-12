@@ -64,7 +64,7 @@ class ErrorPage(webapp2.RequestHandler):
     def get(self):
         """ Loads error page """
         context = utils.getContext(self)
-        template = template_env.get_template('album_create_error.html.j2')
+        template = template_env.get_template('error.html.j2')
         self.response.out.write(template.render(context))
 
 class ViewPage(webapp2.RequestHandler):
@@ -90,6 +90,7 @@ class ViewPage(webapp2.RequestHandler):
                 # get_html_from_cloud_storage returns the tuple (success, content). We ignore the first value and just take
                 # the content since it returns an error message for "content" if it did not succeed
                 (_, context['saved_html']) = utils.get_html_from_cloud_storage(album.key.parent().get(), album.key.urlsafe())
+                context['urlsafe_html'] = context['saved_html'].replace("\"", "'").replace('\n', '').replace('\r', '')
                 template = template_env.get_template('view.html.j2')
             else:
                 #Private album

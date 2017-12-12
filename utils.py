@@ -24,6 +24,7 @@ DELETE_BASE_URL_CS = "https://www.googleapis.com/storage/v1/b/" + BUCKET_NAME + 
 GET_BASE_URL_CS = "https://www.googleapis.com/storage/v1/b/" + BUCKET_NAME + "/o/"
 
 # Used to disable calls to vision api when testing non-vision related features
+# SET TO FALSE BEFORE DEPLOYING
 MINIMIZE_BILLING = False
 
 def getContext(page):
