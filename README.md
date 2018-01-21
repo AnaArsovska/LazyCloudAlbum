@@ -2,6 +2,8 @@
 CS150 - Cloud Applications final project.
 
 
+lazycloudalbum.appspot.com
+
 Deployment:
 
 Make sure you have up to date version of the Google Cloud SDK
